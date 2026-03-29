@@ -100,27 +100,27 @@ fish_data = pd.DataFrame({
 
 # ============ 初始化会话状态 ============
 if "selected_page" not in st.session_state:
-    st.session_state.selected_page = "🏠 总览大屏"
+    st.session_state.selected_page = "总览大屏"
 
-# ============ 侧边栏（popover 弹窗版） ============
+# ============ 弹窗函数 ============
+@st.dialog("选择模块", width="small")
+def select_module():
+    options = ["🏠 总览大屏", "💧 水质监测", "🐟 鱼类修复"]
+    selected = st.radio("请选择要查看的模块：", options, index=options.index(st.session_state.selected_page))
+    if st.button("确认选择", use_container_width=True):
+        st.session_state.selected_page = selected
+        st.rerun()
+
+# ============ 侧边栏 ============
 with st.sidebar:
     st.markdown("# 💧 长江生态保护")
     st.markdown("### 数据可视化驾驶舱")
     st.markdown("---")
-
-    # 这里就是你要的“点击弹出选择”
-    with st.popover("📂 打开模块选择", use_container_width=True):
-        options = ["🏠 总览大屏", "💧 水质监测", "🐟 鱼类修复"]
-
-        selected = st.radio(
-            "请选择要查看的模块：",
-            options,
-            index=options.index(st.session_state.selected_page)
-        )
-        if st.button("确认切换", use_container_width=True):
-            st.session_state.selected_page = selected
-            st.rerun()
-
+    
+    # 替换原来的 selectbox 为弹窗按钮
+    if st.button("📂 打开模块选择", use_container_width=True):
+        select_module()
+    
     st.markdown("---")
     st.caption("数据实时更新 | 长江水利委员会")
 
