@@ -262,7 +262,7 @@ video_html = f"""
 <div style="display: flex; justify-content: center; margin: 20px 0;">
     <iframe
         width="800"
-        # ... 前面的代码 ...
+       
 
 elif page == "⚙️ 系统设置":
     st.markdown('<p class="section-title">⚙️ 系统全局设置</p>', unsafe_allow_html=True)
@@ -270,23 +270,20 @@ elif page == "⚙️ 系统设置":
     st.toggle("开启实时报警推送")
     st.slider("设置数据刷新频率 (分钟)", 1, 60, 5)
     
-    # 👇 在这里粘贴上面的亮度代码 👇
-        # ... 上面的代码 ...
     st.slider("设置数据刷新频率（分钟）", 1, 60, 5)
 
-    # 👇 下面这 4 行代码前面都要加 4 个空格
+  
     st.subheader("🔆 显示与亮度")
     brightness = st.slider("屏幕亮度调节", 0, 100, 80)
     if brightness < 30:
         st.caption("🌙 当前为夜间模式")
 
     st.button("保存设置")
-    # ... 下面的代码 ...
-    # 👆 粘贴结束 👆
+
 
     st.button("保存设置")
 
-# ... 后面的代码 ...
+
         height="450"
         src="https://www.youtube.com/embed/{video_id}?rel=0&controls=1"
         title="YouTube video player"
