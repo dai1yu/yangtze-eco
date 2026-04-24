@@ -280,25 +280,6 @@ video_html = f"""
 """
 # 渲染视频
 st.markdown(video_html, unsafe_allow_html=True)
-
-
-# ==========================================
-# 第二部分：系统设置页面（elif 分支）
-# ==========================================
-elif page == "⚙️ 系统设置":
-    st.markdown('<p class="section-title">⚙️ 系统全局设置</p>', unsafe_allow_html=True)
-
-    st.toggle("开启实时报警推送")
-    st.slider("设置数据刷新频率（分钟）", 1, 60, 5)
-
-    # --- 新增的亮度调节 ---
-    st.subheader("🔆 显示与亮度")
-    brightness = st.slider("屏幕亮度调节", 0, 100, 80)
-    if brightness < 30:
-        st.caption("🌙 当前为夜间模式")
-
-    st.button("保存设置")
-# 渲染视频（在设置页面之外）
 st.markdown(video_html, unsafe_allow_html=True)
 
 st.markdown("### 💬 互动问答")
