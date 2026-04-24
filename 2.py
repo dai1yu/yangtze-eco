@@ -257,22 +257,32 @@ elif page == "📚 科普教育平台":
     st.markdown("### 🎥 科普视频推荐")
     # 使用 HTML iframe 嵌入视频，兼容性更好
 # 注意：我们将 watch?v= 后面的 ID 提取出来，放入 embed 链接中
-video_id = "dQw4w9WgXcQ"  # 这里可以换成你想播放的真实视频ID
+# --- 视频部分 ---
+video_id = "dQw4w9WgXcQ"
+# 注意：这里修复了 HTML 代码错位的问题，将其正确包裹在变量中
 video_html = f"""
 <div style="display: flex; justify-content: center; margin: 20px 0;">
     <iframe
         width="800"
-       
+        height="450"
+        src="https://www.youtube.com/embed/{video_id}?rel=0&controls=1"
+        title="YouTube video player"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+        style="border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); max-width: 100%;">
+    </iframe>
+</div>
+"""
 
+# --- 系统设置部分 ---
 elif page == "⚙️ 系统设置":
     st.markdown('<p class="section-title">⚙️ 系统全局设置</p>', unsafe_allow_html=True)
 
     st.toggle("开启实时报警推送")
-    st.slider("设置数据刷新频率 (分钟)", 1, 60, 5)
-    
     st.slider("设置数据刷新频率（分钟）", 1, 60, 5)
 
-  
+    # 新增的亮度调节（注意缩进）
     st.subheader("🔆 显示与亮度")
     brightness = st.slider("屏幕亮度调节", 0, 100, 80)
     if brightness < 30:
@@ -280,20 +290,7 @@ elif page == "⚙️ 系统设置":
 
     st.button("保存设置")
 
-
-    st.button("保存设置")
-
-
-        height="450"
-        src="https://www.youtube.com/embed/{video_id}?rel=0&controls=1"
-        title="YouTube video player"
-        frameborder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowfullscreen
-        style="border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); max-width: 100%;"
-    ></iframe>
-</div>
-"""
+# 渲染视频（在设置页面之外）
 st.markdown(video_html, unsafe_allow_html=True)
 
 st.markdown("### 💬 互动问答")
