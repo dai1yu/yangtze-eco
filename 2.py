@@ -266,22 +266,22 @@ st.markdown("### 📺 科普视频推荐")
 # ==========================================
 # 1. 科普视频区域 (主页面内容)
 # ==========================================
-video_id = "dQw4w9WgXcQ"
-video_html = f"""
+video_html = """
 <div style="display: flex; justify-content: center; margin: 20px 0;">
     <iframe
+        src="//player.bilibili.com/player.html?aid=802765328&bvid=BV1xW4y1a7zT&cid=459323432&page=1"
+        scrolling="no"
+        border="0"
+        frameborder="no"
+        framespacing="0"
+        allowfullscreen="true"
         width="800"
-        height="450"
-        src="https://www.youtube.com/embed/{video_id}?rel=0&controls=1"
-        title="YouTube video player"
-        frameborder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowfullscreen
-        style="border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); max-width: 100%;"
-    ></iframe>
+        height="450">
+    </iframe>
 </div>
 """
 # 注意：这里只保留一次渲染
+
 st.markdown(video_html, unsafe_allow_html=True)
 
 # ==========================================
