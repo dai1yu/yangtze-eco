@@ -85,7 +85,7 @@ with st.sidebar:
     st.markdown("### 智慧监测 · 生态修复 · 科普教育")
     st.markdown("---")
 
-   page = st.selectbox(
+page = st.selectbox(
     "选择驾驶舱",
     ["🏠 总览驾驶舱", "💧 水质监测中心", "🐟 鱼类修复中心", "📚 科普教育平台", "📊 数据分析报告", "⚙️ 系统设置"],
     key="nav"
