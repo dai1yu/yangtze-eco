@@ -269,7 +269,7 @@ st.markdown("### 📺 科普视频推荐")
 video_html = """
 <div style="display: flex; justify-content: center; margin: 20px 0;">
     <iframe
-        src="//player.bilibili.com/player.html?bvid=BV1XX421u79n&page=1"
+        src="//player.bilibili.com/player.html?isOutside=true&aid=112844863506780&bvid=BV1ebe9epEYX&cid=500001626552220&p=1"
         scrolling="no"
         border="0"
         frameborder="no"
