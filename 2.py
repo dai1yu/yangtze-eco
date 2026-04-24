@@ -275,7 +275,7 @@ video_html = f"""
 st.markdown(video_html, unsafe_allow_html=True)
 
 st.markdown("### 💬 互动问答")
-    question = st.text_input("你有什么关于长江生态保护的问题？")
+question = st.text_input("你有什么关于长江生态保护的问题？")
     if question:
         st.success("感谢提问！问题已记录，专家会尽快回复。")
 
