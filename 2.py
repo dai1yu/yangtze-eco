@@ -263,6 +263,9 @@ elif page == "📚 科普教育平台":
 # ==========================================
 st.markdown("### 📺 科普视频推荐")
 
+# ==========================================
+# 1. 科普视频区域 (主页面内容)
+# ==========================================
 video_id = "dQw4w9WgXcQ"
 video_html = f"""
 <div style="display: flex; justify-content: center; margin: 20px 0;">
@@ -278,17 +281,25 @@ video_html = f"""
     ></iframe>
 </div>
 """
-# 渲染视频
-st.markdown(video_html, unsafe_allow_html=True)
+# 注意：这里只保留一次渲染
 st.markdown(video_html, unsafe_allow_html=True)
 
-st.markdown("### 💬 互动问答")
+# ==========================================
+# 2. 互动问答区域 (属于主页面)
+# ==========================================
+st.markdown("### 🙋 互动问答")
 question = st.text_input("你有什么关于长江生态保护的问题？")
 if question:
     st.success("感谢提问！问题已记录，专家会尽快回复。")
 
-# ================================== 新增：数据分析报告 ==================================
+# ==========================================
+# 3. 数据分析报告 (elif 分支)
+# ==========================================
 elif page == "📊 数据分析报告":
+    st.markdown('<p class="section-title">📊 深度数据分析报告</p>', unsafe_allow_html=True)
+    st.subheader("🐟 水质与鱼类相关性分析")
+    st.write("通过皮尔逊相关系数分析，我们发现溶解氧含量与鱼类种群数量呈强正相关。")
+    st.info("此处展示相关性热力图或散点图...")
     st.markdown('<p class="section-title">📊 深度数据分析报告</p>', unsafe_allow_html=True)
 
     st.subheader("📉 水质与鱼类相关性分析")
