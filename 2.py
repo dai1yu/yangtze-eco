@@ -4,6 +4,41 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 
+# 初始化亮度，如果之前没设置过，默认为 100
+if 'brightness' not in st.session_state:
+    st.session_state.brightness = 91
+ st.markdown(
+    f"""
+    <style>
+        /* 1. 修改页面整体背景 (包括侧边栏和顶部) */
+        [data-testid="stAppViewContainer"] {{
+            background-color: {bg_color};
+            /* 强制覆盖默认背景图（如果有） */
+            background-image: none; 
+        }}
+
+        /* 2. 修改主内容区的背景 (中间那块) */
+        .main .block-container {{
+            background-color: {bg_color};
+            /* 增加一点透明度，让融合更自然，或者保持不透明 */
+            /* background-color: rgba(255, 255, 255, 0.8); 如果想让中间一直是白底 */
+        }}
+
+        /* 3. 修改侧边栏背景，确保它也跟着变 */
+        [data-testid="stSidebar"] {{
+            background-color: {bg_color};
+        }}
+
+        /* 4. 增加过渡动画，让变色更丝滑 */
+        [data-testid="stAppViewContainer"], [data-testid="stSidebar"] {{
+            transition: background-color 0.3s ease;
+        }}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+
 # 页面配置 - 宽屏模式
 st.set_page_config(page_title="长江生态保护平台", layout="wide", page_icon="🌊")
 
@@ -84,6 +119,15 @@ with st.sidebar:
     st.markdown("# 🌊 长江生态保护")
     st.markdown("### 智慧监测 · 生态修复 · 科普教育")
     st.markdown("---")
+
+    with st.sidebar:
+    # ... 你的标题和其他内容 ...
+
+    # 加入这个滑块（或者把它放在“系统设置”页面里，但必须在 session_state 中保存）
+    # 这里为了演示全局控制，建议直接放侧边栏，或者在“系统设置”里修改 st.session_state.brightness
+    brightness = st.slider("全局背景亮度", 0, 100, st.session_state.brightness)
+    st.session_state.brightness = brightness  # 保存到全局状态   
+   
     page = st.selectbox(
     "选择驾驶舱",
     ["🏠 总览驾驶舱", "💧 水质监测中心", "🐟 鱼类修复中心", "📚 科普教育平台", "📊 数据分析报告", "⚙️ 系统设置"],
@@ -339,33 +383,4 @@ elif page == "⚙️ 系统设置":
 
     # 注入 CSS 修改 body 背景 (注意：这会覆盖 Streamlit 默认的主题样式，需谨慎使用)
     # 更好的做法是修改特定 div 的样式，或者使用 st.markdown 显示一个色块示意
-    st.markdown(
-    f"""
-    <style>
-        /* 1. 修改页面整体背景 (包括侧边栏和顶部) */
-        [data-testid="stAppViewContainer"] {{
-            background-color: {bg_color};
-            /* 强制覆盖默认背景图（如果有） */
-            background-image: none; 
-        }}
-
-        /* 2. 修改主内容区的背景 (中间那块) */
-        .main .block-container {{
-            background-color: {bg_color};
-            /* 增加一点透明度，让融合更自然，或者保持不透明 */
-            /* background-color: rgba(255, 255, 255, 0.8); 如果想让中间一直是白底 */
-        }}
-
-        /* 3. 修改侧边栏背景，确保它也跟着变 */
-        [data-testid="stSidebar"] {{
-            background-color: {bg_color};
-        }}
-
-        /* 4. 增加过渡动画，让变色更丝滑 */
-        [data-testid="stAppViewContainer"], [data-testid="stSidebar"] {{
-            transition: background-color 0.3s ease;
-        }}
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+   
