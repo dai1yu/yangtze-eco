@@ -263,8 +263,8 @@ elif page == "💧 水质监测中心":
 # trend_data = water_data  <-- 如果你的数据本身就是最近的，直接用这句
 
    # 如果你需要模拟最近30天的数据（为了防止报错，先加这一段）：
-   import pandas as pd
-   import numpy as np
+import pandas as pd
+import numpy as np
    
    # 生成最近30天的日期
    dates = pd.date_range(end=pd.Timestamp.today(), periods=30)
