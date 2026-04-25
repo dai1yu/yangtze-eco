@@ -260,29 +260,32 @@ elif page == "💧 水质监测中心":
     fig.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", font_color="#cccccc")
     st.plotly_chart(fig, use_container_width=True)
 
+# --------------------------
+# 1. 直接定义完整的 fish_data（带4类鱼数据）
+# --------------------------
+fish_data = pd.DataFrame({
+    "年份": [2020, 2021, 2022, 2023, 2024],
+    "四大家鱼(万尾)": [120, 135, 150, 170, 195],
+    "珍稀鱼类(万尾)": [10, 15, 20, 25, 30],
+    "洄游性鱼类(万尾)": [20, 25, 30, 35, 40],
+    "底栖鱼类(万尾)": [30, 35, 40, 45, 50]
+})
+
 # ==================== 鱼类修复中心 ====================
 elif page == "🐟 鱼类修复中心":
     st.markdown('<p class="section-title">🐟 长江鱼类生态修复系统</p>', unsafe_allow_html=True)
 
-    # --------------------------
-    # 数据校验（可保留或删除）
-    # --------------------------
-    with st.expander("🔍 数据校验（调试用，可删除）"):
-        st.write("fish_data 列名：", fish_data.columns.tolist())
-        st.write("fish_data 前5行数据：", fish_data.head())
-
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("### 📈 种群恢复趋势")
-        # 适配你当前的2列数据
+        # 适配4类鱼的完整绘图代码
         fig = px.area(
             fish_data,
             x="年份",
-            y=["四大家鱼(万尾)", "珍稀鱼类(万尾)"],
+            y=["四大家鱼(万尾)", "珍稀鱼类(万尾)", "洄游性鱼类(万尾)", "底栖鱼类(万尾)"],
             title="鱼类资源总量变化",
-            color_discrete_sequence=["#00ffff", "#ffaa00"]  # 匹配2个颜色
+            color_discrete_sequence=["#00ffff", "#ffaa00", "#00ff00", "#ff6699"]
         )
-        # 图表美化
         fig.update_layout(
             plot_bgcolor="rgba(0,0,0,0)",
             paper_bgcolor="rgba(0,0,0,0)",
