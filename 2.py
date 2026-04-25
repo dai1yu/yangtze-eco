@@ -264,21 +264,34 @@ elif page == "💧 水质监测中心":
 elif page == "🐟 鱼类修复中心":
     st.markdown('<p class="section-title">🐟 长江鱼类生态修复系统</p>', unsafe_allow_html=True)
 
+    # --------------------------
+    # 第一步：先检查数据是否正常
+    # --------------------------
+    st.write("🔍 数据校验：")
+    st.write("fish_data 列名：", fish_data.columns.tolist())
+    st.write("fish_data 前5行数据：", fish_data.head())
+
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("### 📈 种群恢复趋势")
-        # 直接用宽表绘制，不需要melt
+        
+        # 这里用一个通用写法，不管你的列名是什么，都能画出来
+        # 假设你的数据里：第一列是年份，后面几列是鱼类数据
+        year_col = fish_data.columns[0]  # 取第一列作为年份
+        fish_cols = fish_data.columns[1:]  # 取后面所有列作为鱼类数据
+
         fig = px.area(
             fish_data,
-            x="年份",  # 如果你的年份列名不是"年份"，改成你实际的列名，比如"year"
-            y=["四大家鱼(万尾)", "珍稀鱼类(万尾)", "洄游性鱼类(万尾)", "底栖鱼类(万尾)"],
+            x=year_col,
+            y=fish_cols,
             title="鱼类资源总量变化",
-            color_discrete_sequence=["#00ffff", "#ffaa00", "#00ff00", "#ff6699"]
+            color_discrete_sequence=["#00ffff", "#ffaa00", "#00ff00", "#ff6699", "#9966ff", "#ff6666"]
         )
         fig.update_layout(
             plot_bgcolor="rgba(0,0,0,0)",
             paper_bgcolor="rgba(0,0,0,0)",
-            font_color="#cccccc"
+            font_color="#cccccc",
+            legend_title="鱼类类别"
         )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -295,6 +308,7 @@ elif page == "🐟 鱼类修复中心":
     st.progress(55, text="**产卵场生态重建**（已完成55%，修复产卵场面积 200 公顷）")
     st.progress(40, text="**洄游通道畅通工程**（已完成40%，拆除小型坝闸 12 座）")
     st.progress(60, text="**珍稀物种保育计划**（已完成60%，人工繁育珍稀鱼类 10 万尾）")
+
 # ==================== 科普教育平台 ====================
 elif page == "📚 科普教育平台":
     st.markdown('<p class="section-title">📚 长江生态智慧科普平台</p >', unsafe_allow_html=True)
