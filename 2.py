@@ -341,32 +341,32 @@ elif page == "⚙️ 系统设置":
     # 更好的做法是修改特定 div 的样式，或者使用 st.markdown 显示一个色块示意
     st.markdown(
         st.markdown(
-        f"""
-        <style>
-            /* 1. 修改页面整体背景 (包括侧边栏和顶部) */
-            [data-testid="stAppViewContainer"] {{
-                background-color: {bg_color};
-                /* 强制覆盖默认背景图（如果有） */
-                background-image: none; 
-            }}
-    
-            /* 2. 修改主内容区的背景 (中间那块) */
-            .main .block-container {{
-                background-color: {bg_color};
-                /* 增加一点透明度，让融合更自然，或者保持不透明 */
-                /* background-color: rgba(255, 255, 255, 0.8); 如果想让中间一直是白底 */
-            }}
-    
-            /* 3. 修改侧边栏背景，确保它也跟着变 */
-            [data-testid="stSidebar"] {{
-                background-color: {bg_color};
-            }}
-    
-            /* 4. 增加过渡动画，让变色更丝滑 */
-            [data-testid="stAppViewContainer"], [data-testid="stSidebar"] {{
-                transition: background-color 0.3s ease;
-            }}
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
+    f"""
+    <style>
+        /* 1. 修改页面整体背景 (包括侧边栏和顶部) */
+        [data-testid="stAppViewContainer"] {{
+            background-color: {bg_color};
+            /* 强制覆盖默认背景图（如果有） */
+            background-image: none; 
+        }}
+
+        /* 2. 修改主内容区的背景 (中间那块) */
+        .main .block-container {{
+            background-color: {bg_color};
+            /* 增加一点透明度，让融合更自然，或者保持不透明 */
+            /* background-color: rgba(255, 255, 255, 0.8); 如果想让中间一直是白底 */
+        }}
+
+        /* 3. 修改侧边栏背景，确保它也跟着变 */
+        [data-testid="stSidebar"] {{
+            background-color: {bg_color};
+        }}
+
+        /* 4. 增加过渡动画，让变色更丝滑 */
+        [data-testid="stAppViewContainer"], [data-testid="stSidebar"] {{
+            transition: background-color 0.3s ease;
+        }}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
