@@ -326,5 +326,28 @@ elif page == "⚙️ 系统设置":
     st.markdown('<p class="section-title">⚙️ 系统全局设置</p>', unsafe_allow_html=True)
 
     st.toggle("开启实时报警推送")
-    st.slider("设置数据刷新频率 (分钟)", 1, 60, 5)
-    st.button("保存设置")
+    st.slider("设置数据刷新频率（分钟）", 1, 60, 5)
+
+    # --- 真正改变背景色的代码 ---
+    brightness = st.slider("🔆 调节背景亮度", 0, 100, 100)
+
+    # 根据亮度值计算背景颜色 (简单的灰度示例)
+    # 100 -> 白色/亮色, 0 -> 黑色/暗色
+    # 这里我们假设默认背景是白色，调低亮度则变灰
+    gray_val = int(255 - (brightness * 2.55)) # 简单映射
+    bg_color = f"rgb({gray_val}, {gray_val}, {gray_val})" if gray_val < 128 else f"rgb({gray_val}, {gray_val}, {gray_val})"
+
+    # 注入 CSS 修改 body 背景 (注意：这会覆盖 Streamlit 默认的主题样式，需谨慎使用)
+    # 更好的做法是修改特定 div 的样式，或者使用 st.markdown 显示一个色块示意
+    st.markdown(
+        f"""
+        <style>
+        /* 这里尝试修改主区块的背景色作为演示 */
+        .main .block-container {{
+            background-color: {bg_color};
+            transition: background-color 0.3s;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
