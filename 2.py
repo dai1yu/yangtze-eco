@@ -326,28 +326,35 @@ elif page == "⚙️ 系统设置":
     st.markdown('<p class="section-title">⚙️ 系统全局设置</p>', unsafe_allow_html=True)
 
     st.toggle("开启实时报警推送")
-    st.slider("设置数据刷新频率（分钟）", 1, 60, 5)
-
-    # --- 真正改变背景色的代码 ---
+    
+    # 1. 获取滑块的值 (0 到 100)
     brightness = st.slider("🔆 调节背景亮度", 0, 100, 100)
 
-    # 根据亮度值计算背景颜色 (简单的灰度示例)
-    # 100 -> 白色/亮色, 0 -> 黑色/暗色
-    # 这里我们假设默认背景是白色，调低亮度则变灰
-    gray_val = int(255 - (brightness * 2.55)) # 简单映射
-    bg_color = f"rgb({gray_val}, {gray_val}, {gray_val})" if gray_val < 128 else f"rgb({gray_val}, {gray_val}, {gray_val})"
+    # 2. 根据亮度值计算颜色
+    # 如果 brightness 是 100，背景就是白色 (255, 255, 255)
+    # 如果 brightness 是 0，背景就是黑色 (0, 0, 0)
+    # 这里我们设定一个基础色（比如你现在的深蓝色），然后调整它的明度，或者直接改变整体遮罩层
+    
+    # 方案 A：简单粗暴 - 直接改变 body 背景色 (示例：从黑到白)
+    # r = g = b = int(brightness * 2.55) 
+    # bg_color = f"rgb({r}, {g}, {b})"
 
-    # 注入 CSS 修改 body 背景 (注意：这会覆盖 Streamlit 默认的主题样式，需谨慎使用)
-    # 更好的做法是修改特定 div 的样式，或者使用 st.markdown 显示一个色块示意
-    st.markdown(
-        f"""
+    # 方案 B：针对你现在的深蓝色背景，做一个“变暗”或“变亮”的遮罩
+    # 假设基础背景是深蓝色 #1e2b3a (RGB: 30, 43, 58)
+    # 我们通过 CSS filter: brightness() 来调整
+    
+    # 3. 注入 CSS 样式
+    # 将亮度值 0-100 转换为 CSS 的 0.2 - 2.0 倍
+    css_brightness = brightness / 50.0 
+    
+    st.markdown(f"""
         <style>
-        /* 这里尝试修改主区块的背景色作为演示 */
+        /* 修改主内容区域的亮度 */
         .main .block-container {{
-            background-color: {bg_color};
-            transition: background-color 0.3s;
+            filter: brightness({css_brightness});
+            transition: filter 0.3s ease; /* 增加一点过渡动画 */
         }}
         </style>
-        """,
-        unsafe_allow_html=True
-    )
+    """, unsafe_allow_html=True)
+
+    st.write(f"当前亮度系数：{css_brightness}")
