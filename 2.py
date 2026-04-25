@@ -46,8 +46,7 @@ st.markdown(f"""
         }}
     </style>
     """,
-    unsafe_allow_html=True
-)
+    unsafe_allow_html=True)
 
 
 # 页面配置 - 宽屏模式
