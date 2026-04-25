@@ -122,8 +122,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-
-# ==================== 侧边栏导航（二级菜单版） ====================
+# ==================== 侧边栏导航（仅保留二级菜单，删除旧的selectbox） ====================
 with st.sidebar:
     st.markdown("# 🐟 长江生态保护")
     st.markdown("### 智慧监测 · 生态修复 · 科普教育")
@@ -133,10 +132,11 @@ with st.sidebar:
     menu_overview = st.expander("🏠 首页总览", expanded=False)
     menu_water = st.expander("💧 水环境监测", expanded=False)
     menu_fish = st.expander("🐟 生物修复中心", expanded=False)
+    menu_kepu = st.expander("📚 科普教育", expanded=False)
     menu_report = st.expander("📊 数据分析报告", expanded=False)
     menu_setting = st.expander("⚙️ 系统设置", expanded=False)
 
-    # 菜单选项
+    # 菜单选项（用radio替代selectbox，实现二级效果）
     with menu_overview:
         page_overview = st.radio("", ["总览驾驶舱"], label_visibility="collapsed")
 
@@ -145,6 +145,9 @@ with st.sidebar:
 
     with menu_fish:
         page_fish = st.radio("", ["鱼类修复中心"], label_visibility="collapsed")
+
+    with menu_kepu:
+        page_kepu = st.radio("", ["科普教育平台"], label_visibility="collapsed")
 
     with menu_report:
         page_report = st.radio("", ["数据分析报告"], label_visibility="collapsed")
@@ -155,18 +158,19 @@ with st.sidebar:
     st.markdown("---")
     st.caption("实时数据更新中 | 数据来源：长江水利委员会")
 
-# 把选中的菜单映射成你原来的page变量
+# 映射到你原来的page变量（和所有if/elif兼容）
 if page_overview == "总览驾驶舱":
     page = "🏠 总览驾驶舱"
 elif page_water == "水质监测中心":
     page = "💧 水质监测中心"
 elif page_fish == "鱼类修复中心":
     page = "🐟 鱼类修复中心"
+elif page_kepu == "科普教育平台":
+    page = "🌍 科普教育平台"
 elif page_report == "数据分析报告":
     page = "📊 数据分析报告"
 elif page_setting == "系统设置":
     page = "⚙️ 系统设置"
-
 # ==================== 模拟数据 ====================
 water_data = pd.DataFrame({
     "监测点": ["宜昌", "武汉", "南京", "上海", "岳阳"],
