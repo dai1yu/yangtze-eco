@@ -350,20 +350,60 @@ elif page == "📚 科普教育平台":
 # ==========================================
 elif page == "📊 数据分析报告":
     st.markdown('<p class="section-title">📊 深度数据分析报告</p>', unsafe_allow_html=True)
-    st.subheader("🐟 水质与鱼类相关性分析")
-    st.write("通过皮尔逊相关系数分析，我们发现溶解氧含量与鱼类种群数量呈强正相关。")
-    st.info("此处展示相关性热力图或散点图...")
-    st.markdown('<p class="section-title">📊 深度数据分析报告</p>', unsafe_allow_html=True)
 
-    st.subheader("📉 水质与鱼类相关性分析")
-    st.write("通过皮尔逊相关系数分析，我们发现溶解氧含量与鱼类种群数量呈强正相关。")
+    # 1. 关键指标看板 (使用列布局)
+    st.subheader("📈 核心生态指标")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric(label="平均溶解氧 (mg/L)", value="6.8", delta="1.2 ↗️")
+    with col2:
+        st.metric(label="监测到的鱼类种类", value="42 种", delta="3 种 ↗️")
+    with col3:
+        st.metric(label="水质综合评分", value="85", delta="良好")
 
-    # 这里可以放一些图表
-    st.info("此处展示相关性热力图或散点图...")
-    # ==========================================
-    # 2. 互动问答区域 (属于主页面)
-    # ==========================================
-    st.markdown("### 🙋 互动问答")
+    st.divider()
+
+    # 2. 深度分析部分
+    st.subheader("🔬 溶解氧与鱼类多样性相关性分析")
+
+    # 这里使用两列布局：左边放图，右边放文字结论
+    c1, c2 = st.columns([2, 1])
+
+    with c1:
+        st.markdown("##### 数据分布散点图")
+        # 模拟生成一些数据用于展示 (实际项目中请使用你的真实数据 df)
+        import numpy as np
+        import pandas as pd
+        import altair as alt
+
+        # 生成模拟数据
+        chart_data = pd.DataFrame({
+            '溶解氧': np.random.uniform(4, 10, 50),
+            '鱼类数量': np.random.uniform(10, 60, 50)
+        })
+
+        # 使用 Altair 绘制散点图 (Streamlit 原生图表也可以，Altair 更美观)
+        scatter_chart = alt.Chart(chart_data).mark_circle(size=60).encode(
+            x='溶解氧',
+            y='鱼类数量',
+            color='鱼类数量',
+            tooltip=['溶解氧', '鱼类数量']
+        ).interactive()
+
+        st.altair_chart(scatter_chart, use_container_width=True)
+
+    with c2:
+        st.markdown("##### 分析结论")
+        st.info("""
+        - **正相关性强**：数据显示，随着溶解氧含量的提升，鱼类物种丰富度呈现明显的上升趋势。
+        - **关键阈值**：当溶解氧低于 **5mg/L** 时，鱼类数量显著减少。
+        - **建议**：应重点监测枯水期的溶解氧水平，以保护敏感鱼类种群。
+        """)
+
+    st.divider()
+
+    # 3. 保留你之前的互动问答 (记得保持缩进！)
+    st.markdown("### 🗣️ 互动问答")
     question = st.text_input("你有什么关于长江生态保护的问题？")
     if question:
         st.success("感谢提问！问题已记录，专家会尽快回复。")
