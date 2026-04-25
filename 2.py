@@ -273,7 +273,7 @@ elif page == "🐟 鱼类修复中心":
             x="年份",
             y=["四大家鱼(万尾)", "珍稀鱼类(万尾)", "洄游性鱼类(万尾)", "底栖鱼类(万尾)"],
             title="鱼类资源总量变化",
-            color_discrete_sequence=["#00ffff", "#ffaa00", "#00ff00", "#ff00ff", "#ff0000", "#0000ff", "#00ff00"]
+            color_discrete_sequence=["#00ffff", "#ffaa00", "#00ff00", ...]
             var_name="fish_category",
         )
         fig.update_layout(
