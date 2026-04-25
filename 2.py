@@ -130,7 +130,7 @@ with st.sidebar:
     st.markdown("### 智慧监测 · 生态修复 · 科普教育")
     st.markdown("---")
 
-    with st.sidebar:
+with st.sidebar:
     # ... 你的标题和其他内容 ...
 
     # 加入这个滑块（或者把它放在“系统设置”页面里，但必须在 session_state 中保存）
@@ -143,8 +143,8 @@ with st.sidebar:
     ["🏠 总览驾驶舱", "💧 水质监测中心", "🐟 鱼类修复中心", "📚 科普教育平台", "📊 数据分析报告", "⚙️ 系统设置"],
     key="nav"
 )
-st.markdown("---")
-st.caption("实时数据更新中 | 数据来源：长江水利委员会")
+    st.markdown("---")
+    st.caption("实时数据更新中 | 数据来源：长江水利委员会")
 
 # ==================== 模拟数据 ====================
 water_data = pd.DataFrame({
