@@ -265,24 +265,27 @@ elif page == "🐟 鱼类修复中心":
     st.markdown('<p class="section-title">🐟 长江鱼类生态修复系统</p >', unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
+
     with col1:
-        st.markdown("### 📊 种群恢复趋势")
-       # 绘制面积图（包含4个维度，颜色更丰富）
-      fig = px.area(
-          fish_data,
-          x="年份",
-          y=["四大家鱼(万尾)", "珍稀鱼类(万尾)", "洄游性鱼类(万尾)", "底栖鱼类(万尾)"],  # 新增两个系列
-          title="鱼类资源总量变化",
-          color_discrete_sequence=["#00ffff", "#ffaa00", "#00ff00", "#ff00ff"]  # 新增两种颜色
-      )
-      fig.update_layout(
-          plot_bgcolor="rgba(0,0,0,0)",
-          paper_bgcolor="rgba(0,0,0,0)",
-          font_color="#cccccc"
-      )
-      st.plotly_chart(fig, use_container_width=True)
-    with col2:
-       st.markdown("### 🗓️ 近期放流活动")
+        st.markdown("### 📈 种群恢复趋势")
+        # 绘制面积图(包含4个维度,颜色更丰富)
+        fig = px.area(
+            fish_data,
+            x="年份",
+            y=["四大家鱼(万尾)", "珍稀鱼类(万尾)", "洄游性鱼类(万尾)", "底栖鱼类(万尾)"],
+            title="鱼类资源总量变化",
+            color_discrete_sequence=["#00ffff", "#ffaa00", "#00ff00", "#ff00ff"]
+        )
+        fig.update_layout(
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
+            font_color="#cccccc"
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+    with col2:  # 确保这一行和上面的 "with col1:" 是对齐的
+        st.markdown("### 📅 近期放流活动")
+        # ... (后面保持不变) ...
    
        # 扩充后的放流记录（新增2026年数据、更多细节）
        st.success("**2026年3月20日**\n\n**宜昌段**春季增殖放流：投放**四大家鱼 45 万尾**，配套投放滤食性鱼类（鲢、鳙）净化水质。")
