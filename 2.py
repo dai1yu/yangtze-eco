@@ -261,27 +261,44 @@ elif page == "💧 水质监测中心":
     st.plotly_chart(fig, use_container_width=True)
 
 # ==================== 鱼类修复中心 ====================
-# ==================== 鱼类修复中心 ====================
 elif page == "🐟 鱼类修复中心":
     st.markdown('<p class="section-title">🐟 长江鱼类生态修复系统</p>', unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("### 📈 种群恢复趋势")
-        # 绘制面积图(包含4个维度,颜色更丰富)
-        fig = px.area(
-            fish_data,
-            x="年份",
-            y=["四大家鱼(万尾)", "珍稀鱼类(万尾)", "洄游性鱼类(万尾)", "底栖鱼类(万尾)"],
-            title="鱼类资源总量变化",
-            color_discrete_sequence=["#00ffff", "#ffaa00", "#00ff00", "#ff6699"],  # 补全第四个颜色
-            var_name="fish_category"
+        
+        # 1. 数据格式转换（把宽表转为长表，适配px.area）
+        fish_data_long = fish_data.melt(
+            id_vars="年份",
+            value_vars=["四大家鱼(万尾)", "珍稀鱼类(万尾)", "洄游性鱼类(万尾)", "底栖鱼类(万尾)"],
+            var_name="fish_category",
+            value_name="数量(万尾)"
         )
+
+        # 2. 绘制面积图（修正参数，去掉无效的var_name）
+        fig = px.area(
+            fish_data_long,
+            x="年份",
+            y="数量(万尾)",
+            color="fish_category",  # 用color区分不同鱼类
+            title="鱼类资源总量变化",
+            color_discrete_map={
+                "四大家鱼(万尾)": "#00ffff",
+                "珍稀鱼类(万尾)": "#ffaa00",
+                "洄游性鱼类(万尾)": "#00ff00",
+                "底栖鱼类(万尾)": "#ff6699"
+            }
+        )
+        
+        # 3. 美化图表样式
         fig.update_layout(
             plot_bgcolor="rgba(0,0,0,0)",
             paper_bgcolor="rgba(0,0,0,0)",
-            font_color="#cccccc"
+            font_color="#cccccc",
+            legend_title="鱼类类别"
         )
+        
         st.plotly_chart(fig, use_container_width=True)
 
     with col2:
@@ -293,11 +310,11 @@ elif page == "🐟 鱼类修复中心":
         st.success("**2026年1月10日**\n\n上海段**河口鱼类放流：刀鲚 5 万尾**、**凤鲚 3 万尾**，助力河口渔业资源恢复。")
 
     st.markdown("### 🏗️ 修复项目进度")
-    # 进度条优化（增加项目、调整数值）
     st.progress(75, text="**鱼类栖息地修复工程**（已完成75%，新增人工鱼巢 500 处）")
     st.progress(55, text="**产卵场生态重建**（已完成55%，修复产卵场面积 200 公顷）")
     st.progress(40, text="**洄游通道畅通工程**（已完成40%，拆除小型坝闸 12 座）")
     st.progress(60, text="**珍稀物种保育计划**（已完成60%，人工繁育珍稀鱼类 10 万尾）")
+
 
 # ==================== 科普教育平台 ====================
 elif page == "📚 科普教育平台":
