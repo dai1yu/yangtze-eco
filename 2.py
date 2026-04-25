@@ -260,8 +260,9 @@ elif page == "💧 水质监测中心":
     fig.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", font_color="#cccccc")
     st.plotly_chart(fig, use_container_width=True)
 
+
 # --------------------------
-# 1. 直接定义完整的 fish_data（带4类鱼数据）
+# 1. 定义数据
 # --------------------------
 fish_data = pd.DataFrame({
     "年份": [2020, 2021, 2022, 2023, 2024],
@@ -271,14 +272,22 @@ fish_data = pd.DataFrame({
     "底栖鱼类(万尾)": [30, 35, 40, 45, 50]
 })
 
+# --------------------------
+# 2. 假设你的页面选择逻辑（你原来的代码里应该有这个）
+# --------------------------
+# 示例：你原来的代码里应该有类似这样的页面选择
+page = st.sidebar.selectbox(
+    "选择页面",
+    ["🐟 鱼类修复中心", "🌍 科普教育平台"]
+)
+
 # ==================== 鱼类修复中心 ====================
-elif page == "🐟 鱼类修复中心":
+if page == "🐟 鱼类修复中心":
     st.markdown('<p class="section-title">🐟 长江鱼类生态修复系统</p>', unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("### 📈 种群恢复趋势")
-        # 适配4类鱼的完整绘图代码
         fig = px.area(
             fish_data,
             x="年份",
@@ -307,6 +316,7 @@ elif page == "🐟 鱼类修复中心":
     st.progress(55, text="**产卵场生态重建**（已完成55%，修复产卵场面积 200 公顷）")
     st.progress(40, text="**洄游通道畅通工程**（已完成40%，拆除小型坝闸 12 座）")
     st.progress(60, text="**珍稀物种保育计划**（已完成60%，人工繁育珍稀鱼类 10 万尾）")
+
 
 # ==================== 科普教育平台 ====================
 elif page == "📚 科普教育平台":
