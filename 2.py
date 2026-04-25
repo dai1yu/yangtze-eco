@@ -122,36 +122,64 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 # ==================== 侧边栏导航 ====================
-with st.sidebar:
-    st.markdown("# 🐟 长江生态保护")
-    st.markdown("### 智慧监测 · 生态修复 · 科普教育")
-    st.markdown("---")
+# 删掉原来的 with st.sidebar: 侧边栏代码，换成下面这段
 
-# 只允许 一次只能选一个 + 唯一key + 绝对不冲突
-page = st.radio(
-    "",
-    [
-        "🏠 总览驾驶舱",
-        "💧 水质监测中心",
-        "🐟 鱼类修复中心",
-        "🌍 科普教育平台",
-        "📊 数据分析报告",
-        "⚙️ 系统设置"
-    ],
-    label_visibility="collapsed",
-    key="main_side_all"
-)
+# 页面顶部导航
+st.markdown("# 🐟 长江生态保护")
+st.markdown("### 智慧监测 · 生态修复 · 科普教育")
+st.markdown("---")
 
-# 折叠美化，不负责切换，只负责收起好看
-st.expander("🏠 总览驾驶舱")
-st.expander("💧 水质监测中心")
-st.expander("🐟 鱼类修复中心")
-st.expander("🌍 科普教育平台")
-st.expander("📊 数据分析报告")
-st.expander("⚙️ 系统设置")
+# 初始化默认页面
+page = "🏠 总览驾驶舱"
+
+# 用 expander 做二级折叠菜单，放在页面主体
+col1, col2, col3 = st.columns(3)
+with col1:
+    menu_overview = st.expander("🏠 首页总览", expanded=False)
+    with menu_overview:
+        overview_choice = st.radio("", ["总览驾驶舱"], label_visibility="collapsed", key="page_radio_1")
+        if overview_choice:
+            page = "🏠 总览驾驶舱"
+
+with col2:
+    menu_water = st.expander("💧 水环境监测", expanded=False)
+    with menu_water:
+        water_choice = st.radio("", ["水质监测中心"], label_visibility="collapsed", key="page_radio_2")
+        if water_choice:
+            page = "💧 水质监测中心"
+
+with col3:
+    menu_fish = st.expander("🐟 生物修复中心", expanded=False)
+    with menu_fish:
+        fish_choice = st.radio("", ["鱼类修复中心"], label_visibility="collapsed", key="page_radio_3")
+        if fish_choice:
+            page = "🐟 鱼类修复中心"
+
+col4, col5, col6 = st.columns(3)
+with col4:
+    menu_kepu = st.expander("📚 科普教育", expanded=False)
+    with menu_kepu:
+        kepu_choice = st.radio("", ["科普教育平台"], label_visibility="collapsed", key="page_radio_4")
+        if kepu_choice:
+            page = "🌍 科普教育平台"
+
+with col5:
+    menu_report = st.expander("📊 数据分析报告", expanded=False)
+    with menu_report:
+        report_choice = st.radio("", ["数据分析报告"], label_visibility="collapsed", key="page_radio_5")
+        if report_choice:
+            page = "📊 数据分析报告"
+
+with col6:
+    menu_setting = st.expander("⚙️ 系统设置", expanded=False)
+    with menu_setting:
+        setting_choice = st.radio("", ["系统设置"], label_visibility="collapsed", key="page_radio_6")
+        if setting_choice:
+            page = "⚙️ 系统设置"
 
 st.markdown("---")
-st.caption("实时数据更新中 | 数据来源：长江水利委员会")
+
+# 下面你原来所有的 if/elif page == "xxx": 页面代码，完全不用改！
 # ==================== 模拟数据 ====================
 water_data = pd.DataFrame({
     "监测点": ["宜昌", "武汉", "南京", "上海", "岳阳"],
