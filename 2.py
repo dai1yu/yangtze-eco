@@ -267,22 +267,36 @@ elif page == "🐟 鱼类修复中心":
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("### 📊 种群恢复趋势")
-        fig = px.area(fish_data, x="年份", y=["四大家鱼(万尾)", "珍稀鱼类(万尾)"],
-                      title="鱼类资源总量变化",
-                      color_discrete_sequence=["#00ffff", "#ffaa00"])
-        fig.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", font_color="#cccccc")
-        st.plotly_chart(fig, use_container_width=True)
-
+       # 绘制面积图（包含4个维度，颜色更丰富）
+fig = px.area(
+    fish_data,
+    x="年份",
+    y=["四大家鱼(万尾)", "珍稀鱼类(万尾)", "洄游性鱼类(万尾)", "底栖鱼类(万尾)"],  # 新增两个系列
+    title="鱼类资源总量变化",
+    color_discrete_sequence=["#00ffff", "#ffaa00", "#00ff00", "#ff00ff"]  # 新增两种颜色
+)
+fig.update_layout(
+    plot_bgcolor="rgba(0,0,0,0)",
+    paper_bgcolor="rgba(0,0,0,0)",
+    font_color="#cccccc"
+)
+st.plotly_chart(fig, use_container_width=True)
     with col2:
-        st.markdown("### 🎣 近期放流活动")
-        st.success("**2025年3月**\n\n宜昌段放流四大家鱼 30 万尾")
-        st.success("**2025年2月**\n\n武汉段放流中华鲟 500 尾")
-        st.success("**2025年1月**\n\n南京段放流珍稀鱼类 2000 尾")
-
-        st.markdown("### 📋 修复项目进度")
-        st.progress(68, text="鱼类栖息地修复工程")
-        st.progress(45, text="产卵场生态重建")
-
+       st.markdown("### 🗓️ 近期放流活动")
+   
+       # 扩充后的放流记录（新增2026年数据、更多细节）
+       st.success("**2026年3月20日**\n\n**宜昌段**春季增殖放流：投放**四大家鱼 45 万尾**，配套投放滤食性鱼类（鲢、鳙）净化水质。")
+       st.success("**2026年3月5日**\n\n**荆州段**珍稀鱼类放流：**中华鲟 800 尾**（全人工繁殖子二代）、**长江江豚 10 头**（迁地保护后野化放归）。")
+       st.success("**2026年2月14日**\n\n**武汉段**洄游性鱼类放流：**胭脂鱼 1.2 万尾**、**长吻鮠 5000 尾**，恢复洄游通道生态。")
+       st.success("**2026年1月25日**\n\n**南京段**底栖鱼类放流：**铜鱼 3 万尾**、**鳤鱼 2 万尾**，修复底栖生物链。")
+       st.success("**2026年1月10日**\n\n**上海段**河口鱼类放流：**刀鲚 5 万尾**、**凤鲚 3 万尾**，助力河口渔业资源恢复。")
+   
+       st.markdown("### 📊 修复项目进度")
+       # 进度条优化（增加项目、调整数值）
+       st.progress(75, text="**鱼类栖息地修复工程**（已完成75%，新增人工鱼巢 500 处）")
+       st.progress(55, text="**产卵场生态重建**（已完成55%，修复产卵场面积 200 公顷）")
+       st.progress(40, text="**洄游通道畅通工程**（已完成40%，拆除小型坝闸 12 座）")
+       st.progress(60, text="**珍稀物种保育计划**（已完成60%，人工繁育珍稀鱼类 10 万尾）")
 # ==================== 科普教育平台 ====================
 elif page == "📚 科普教育平台":
     st.markdown('<p class="section-title">📚 长江生态智慧科普平台</p >', unsafe_allow_html=True)
