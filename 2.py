@@ -136,8 +136,7 @@ with st.sidebar:
 
     # 加入这个滑块（或者把它放在“系统设置”页面里，但必须在 session_state 中保存）
     # 这里为了演示全局控制，建议直接放侧边栏，或者在“系统设置”里修改 st.session_state.brightness
-    brightness = st.slider("全局背景亮度", 0, 100, st.session_state.brightness)
-    st.session_state.brightness = brightness  # 保存到全局状态   
+   
    
     page = st.selectbox(
     "选择驾驶舱",
