@@ -123,49 +123,21 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==================== 侧边栏导航 ====================
+# ==================== 侧边栏导航 ====================
 with st.sidebar:
     st.markdown("# 🐟 长江生态保护")
     st.markdown("### 智慧监测 · 生态修复 · 科普教育")
     st.markdown("---")
 
-# 默认页面
-page = "🏠 总览驾驶舱"
+    # 只保留一个selectbox，和你所有页面逻辑100%匹配
+    page = st.selectbox(
+        "选择驾驶舱",
+        ["🏠 总览驾驶舱", "💧 水质监测中心", "🐟 鱼类修复中心", "🌍 科普教育平台", "📊 数据分析报告", "⚙️ 系统设置"],
+        key="nav"
+    )
 
-# 1
-m1 = st.expander("🏠 总览驾驶舱", expanded=False)
-with m1:
-    opt1 = st.radio("", ["🏠 总览驾驶舱"], label_visibility="collapsed", key="k1")
-    page = opt1
-
-# 2
-m2 = st.expander("💧 水质监测中心", expanded=False)
-with m2:
-    opt2 = st.radio("", ["💧 水质监测中心"], label_visibility="collapsed", key="k2")
-    page = opt2
-
-#3
-m3 = st.expander("🐟 鱼类修复中心", expanded=False)
-with m3:
-    opt3 = st.radio("", ["🐟 鱼类修复中心"], label_visibility="collapsed", key="k3")
-    page = opt3
-
-#4
-m4 = st.expander("🌍 科普教育平台", expanded=False)
-with m4:
-    opt4 = st.radio("", ["🌍 科普教育平台"], label_visibility="collapsed", key="k4")
-    page = opt4
-
-#5
-m5 = st.expander("📊 数据分析报告", expanded=False)
-with m5:
-    opt5 = st.radio("", ["📊 数据分析报告"], label_visibility="collapsed", key="k5")
-    page = opt5
-
-#6
-m6 = st.expander("⚙️ 系统设置", expanded=False)
-with m6:
-    opt6 = st.radio("", ["⚙️ 系统设置"], label_visibility="collapsed", key="k6")
-    page = opt6
+    st.markdown("---")
+    st.caption("实时数据更新中 | 数据来源：长江水利委员会")
 # ==================== 模拟数据 ====================
 water_data = pd.DataFrame({
     "监测点": ["宜昌", "武汉", "南京", "上海", "岳阳"],
