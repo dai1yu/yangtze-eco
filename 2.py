@@ -268,19 +268,19 @@ elif page == "🐟 鱼类修复中心":
     with col1:
         st.markdown("### 📊 种群恢复趋势")
        # 绘制面积图（包含4个维度，颜色更丰富）
-   fig = px.area(
-       fish_data,
-       x="年份",
-       y=["四大家鱼(万尾)", "珍稀鱼类(万尾)", "洄游性鱼类(万尾)", "底栖鱼类(万尾)"],  # 新增两个系列
-       title="鱼类资源总量变化",
-       color_discrete_sequence=["#00ffff", "#ffaa00", "#00ff00", "#ff00ff"]  # 新增两种颜色
-   )
-   fig.update_layout(
-       plot_bgcolor="rgba(0,0,0,0)",
-       paper_bgcolor="rgba(0,0,0,0)",
-       font_color="#cccccc"
-   )
-   st.plotly_chart(fig, use_container_width=True)
+      fig = px.area(
+          fish_data,
+          x="年份",
+          y=["四大家鱼(万尾)", "珍稀鱼类(万尾)", "洄游性鱼类(万尾)", "底栖鱼类(万尾)"],  # 新增两个系列
+          title="鱼类资源总量变化",
+          color_discrete_sequence=["#00ffff", "#ffaa00", "#00ff00", "#ff00ff"]  # 新增两种颜色
+      )
+      fig.update_layout(
+          plot_bgcolor="rgba(0,0,0,0)",
+          paper_bgcolor="rgba(0,0,0,0)",
+          font_color="#cccccc"
+      )
+      st.plotly_chart(fig, use_container_width=True)
     with col2:
        st.markdown("### 🗓️ 近期放流活动")
    
