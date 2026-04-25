@@ -253,7 +253,7 @@ elif page == "📚 科普教育平台":
         with st.expander(f"📄 {article['title']} ({article['date']})"):
             st.write(article["content"])
 
-        st.markdown("### 🎥 科普视频推荐")
+    st.markdown("### 🎥 科普视频推荐")
         # 使用 HTML iframe 嵌入视频，兼容性更好
     # 注意：我们将 watch?v= 后面的 ID 提取出来，放入 embed 链接中
     # --- 视频部分 ---
