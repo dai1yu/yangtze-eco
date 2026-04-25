@@ -260,6 +260,20 @@ elif page == "📚 科普教育平台":
     # ==========================================
     # 第一部分：科普视频推荐（放在设置判断之前）
     # ==========================================
+    video_html = """
+    <div style="display: flex; justify-content: center; margin: 20px 0;">
+        <iframe
+            src="//player.bilibili.com/player.html?isOutside=true&aid=112844863506780&bvid=BV1ebe9epEYX&cid=500001626552220&p=1"
+            scrolling="no"
+            border="0"
+            frameborder="no"
+            framespacing="0"
+            allowfullscreen="true"
+            width="800"
+            height="450">
+        </iframe>
+    </div>
+    """
     st.markdown("### 📺 科普视频推荐")
     
     # ==========================================
