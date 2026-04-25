@@ -265,28 +265,24 @@ elif page == "🐟 鱼类修复中心":
     st.markdown('<p class="section-title">🐟 长江鱼类生态修复系统</p>', unsafe_allow_html=True)
 
     # --------------------------
-    # 第一步：先检查数据是否正常
+    # 数据校验（可保留或删除）
     # --------------------------
-    st.write("🔍 数据校验：")
-    st.write("fish_data 列名：", fish_data.columns.tolist())
-    st.write("fish_data 前5行数据：", fish_data.head())
+    with st.expander("🔍 数据校验（调试用，可删除）"):
+        st.write("fish_data 列名：", fish_data.columns.tolist())
+        st.write("fish_data 前5行数据：", fish_data.head())
 
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("### 📈 种群恢复趋势")
-        
-        # 这里用一个通用写法，不管你的列名是什么，都能画出来
-        # 假设你的数据里：第一列是年份，后面几列是鱼类数据
-        year_col = fish_data.columns[0]  # 取第一列作为年份
-        fish_cols = fish_data.columns[1:]  # 取后面所有列作为鱼类数据
-
+        # 适配你当前的2列数据
         fig = px.area(
             fish_data,
-            x=year_col,
-            y=fish_cols,
+            x="年份",
+            y=["四大家鱼(万尾)", "珍稀鱼类(万尾)"],
             title="鱼类资源总量变化",
-            color_discrete_sequence=["#00ffff", "#ffaa00", "#00ff00", "#ff6699", "#9966ff", "#ff6666"]
+            color_discrete_sequence=["#00ffff", "#ffaa00"]  # 匹配2个颜色
         )
+        # 图表美化
         fig.update_layout(
             plot_bgcolor="rgba(0,0,0,0)",
             paper_bgcolor="rgba(0,0,0,0)",
