@@ -282,8 +282,7 @@ elif page == "🐟 鱼类修复中心":
             font_color="#cccccc"
         )
         st.plotly_chart(fig, use_container_width=True)
-
-    with col2:  # 确保这一行和上面的 "with col1:" 是对齐的
+       with col2:  # 确保这一行和上面的 "with col1:" 是对齐的
         st.markdown("### 📅 近期放流活动")
         # ... (后面保持不变) ...
    
