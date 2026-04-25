@@ -276,14 +276,14 @@ trend_data = pd.DataFrame({
 })
 
    # --- 2. 再画图 ---
-   fig = px.line(
-       trend_data,  # 现在程序认识 trend_data 了
-       x="日期",
-       y=["溶解氧", "pH"],
-       title="水质指标趋势（近30天）",
-       markers=True,
-       color_discrete_map={"溶解氧": "#00ffff", "pH": "#ffaa00"}
-   )
+fig = px.line(
+    trend_data,  # 现在程序认识 trend_data 了
+    x="日期",
+    y=["溶解氧", "pH"],
+    title="水质指标趋势（近30天）",
+    markers=True,
+    color_discrete_map={"溶解氧": "#00ffff", "pH": "#ffaa00"}
+)
    
    # ... 后面的 update_layout 代码保持不变 ...
    fig = px.line(
