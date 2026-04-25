@@ -235,7 +235,7 @@ if page == "🏠 总览驾驶舱":
 
 # ==================== 水质监测中心 ====================
 elif page == "💧 水质监测中心":
-    st.markdown('<p class="section-title">💧 智能水质监测系统</p >', unsafe_allow_html=True)
+    st.markdown('<p class="section-title">💧 智能水质监测系统</p>', unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -254,68 +254,51 @@ elif page == "💧 水质监测中心":
     st.markdown("### 📋 实时监测数据")
     st.dataframe(water_data, use_container_width=True)
 
-    # 水质趋势模拟
+    # 生成近30天水质趋势数据
+    dates = pd.date_range(end=pd.Timestamp.today(), periods=30)
     trend_data = pd.DataFrame({
-        "日期": pd.date_range(start="2025-03-01", periods=30, freq="D"),
-        "溶解氧": [6.2 + i * 0.03 for i in range(30)],
-        "pH": [7.1 + i * 0.01 for i in range(30)]
+        "日期": dates,
+        "溶解氧": np.random.uniform(6.0, 8.5, 30),
+        "pH": np.random.uniform(7.0, 8.0, 30)
     })
-   dates = pd.date_range(end=pd.Timestamp.today(), periods=30)
-   trend_data = pd.DataFrame({
-       "日期": dates,
-       "溶解氧": np.random.uniform(6.0, 8.5, 30), # 模拟溶解氧数据
-       "pH": np.random.uniform(7.0, 8.0, 30)      # 模拟pH数据
-   })
-   
-   
-   fig = px.line(
-       trend_data,  # 现在程序认识 trend_data 了
-       x="日期",
-       y=["溶解氧", "pH"],
-       title="水质指标趋势（近30天）",
-       markers=True,
-       color_discrete_map={"溶解氧": "#00ffff", "pH": "#ffaa00"}
-   )
-      
-   
-   fig = px.line(
-       trend_data,
-       x="日期",
-       y=["溶解氧", "pH"],
-       title="水质指标趋势（近30天）",
-       markers=True,  # 【关键修改】给每个数据点加上圆点，看起来更专业
-       color_discrete_map={"溶解氧": "#00ffff", "pH": "#ffaa00"} # 【关键修改】指定好看的颜色，而不是默认的蓝色
-   )
-   
-   
-   fig.update_layout(
-       plot_bgcolor="rgba(0,0,0,0)",      # 图表背景透明
-       paper_bgcolor="rgba(0,0,0,0)",     # 纸张背景透明
-       font_color="#cccccc",              # 字体颜色
-       hovermode="x unified",             # 【关键修改】鼠标悬停时，显示统一十字准星，体验更好
-       xaxis=dict(
-           showgrid=True,                 # 显示X轴网格
-           gridcolor='rgba(255,255,255,0.1)', # 网格颜色淡一点
-           tickformat="%m月%d日"          # 【关键修改】日期格式改为中文，去掉年份更清爽
-       ),
-       yaxis=dict(
-           showgrid=True,                 # 显示Y轴网格
-           gridcolor='rgba(255,255,255,0.1)',
-           zeroline=False                 # 隐藏0刻度线
-       ),
-       legend=dict(                       # 图例设置
-           orientation="h",               # 水平排列
-           yanchor="bottom",
-           y=1.02,
-           xanchor="right",
-           x=1
-       )
-   )
-   
-   fig.update_traces(line_width=3)
-   
-   
-   st.plotly_chart(fig, use_container_width=True)
+    
+    # 绘制趋势图
+    fig = px.line(
+        trend_data,
+        x="日期",
+        y=["溶解氧", "pH"],
+        title="水质指标趋势（近30天）",
+        markers=True,
+        color_discrete_map={"溶解氧": "#00ffff", "pH": "#ffaa00"}
+    )
+    
+    # 图表样式美化
+    fig.update_layout(
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        font_color="#cccccc",
+        hovermode="x unified",
+        xaxis=dict(
+            showgrid=True,
+            gridcolor='rgba(255,255,255,0.1)',
+            tickformat="%m月%d日"
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor='rgba(255,255,255,0.1)',
+            zeroline=False
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
+    
+    fig.update_traces(line_width=3)
+    st.plotly_chart(fig, use_container_width=True)
    # 生成基础折线图
 # --- 1. 先准备数据（这是你漏掉的一步） ---
 # 假设你的总数据表叫 water_data，我们需要筛选出最近的数据或者模拟一下
