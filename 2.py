@@ -127,15 +127,31 @@ with st.sidebar:
     st.markdown("### 智慧监测 · 生态修复 · 科普教育")
     st.markdown("---")
 
-    # 下拉选择框（无重复，和你所有页面逻辑兼容）
-    page = st.selectbox(
-        "选择驾驶舱",
-        ["🏠 总览驾驶舱", "💧 水质监测中心", "🐟 鱼类修复中心", "🌍 科普教育平台", "📊 数据分析报告", "⚙️ 系统设置"],
-        key="nav"
-    )
+# 只允许 一次只能选一个 + 唯一key + 绝对不冲突
+page = st.radio(
+    "",
+    [
+        "🏠 总览驾驶舱",
+        "💧 水质监测中心",
+        "🐟 鱼类修复中心",
+        "🌍 科普教育平台",
+        "📊 数据分析报告",
+        "⚙️ 系统设置"
+    ],
+    label_visibility="collapsed",
+    key="main_side_all"
+)
 
-    st.markdown("---")
-    st.caption("实时数据更新中 | 数据来源：长江水利委员会")
+# 折叠美化，不负责切换，只负责收起好看
+st.expander("🏠 总览驾驶舱")
+st.expander("💧 水质监测中心")
+st.expander("🐟 鱼类修复中心")
+st.expander("🌍 科普教育平台")
+st.expander("📊 数据分析报告")
+st.expander("⚙️ 系统设置")
+
+st.markdown("---")
+st.caption("实时数据更新中 | 数据来源：长江水利委员会")
 # ==================== 模拟数据 ====================
 water_data = pd.DataFrame({
     "监测点": ["宜昌", "武汉", "南京", "上海", "岳阳"],
