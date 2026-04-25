@@ -340,7 +340,6 @@ elif page == "⚙️ 系统设置":
     # 注入 CSS 修改 body 背景 (注意：这会覆盖 Streamlit 默认的主题样式，需谨慎使用)
     # 更好的做法是修改特定 div 的样式，或者使用 st.markdown 显示一个色块示意
     st.markdown(
-        st.markdown(
     f"""
     <style>
         /* 1. 修改页面整体背景 (包括侧边栏和顶部) */
