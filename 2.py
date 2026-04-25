@@ -11,15 +11,6 @@ if 'brightness' not in st.session_state:
 # 将最后的 100 改为 None，或者直接使用 st.session_state.brightness
 
 
-        /* 4. 增加过渡动画，让变色更丝滑 */
-        [data-testid="stAppViewContainer"], [data-testid="stSidebar"] {{
-            transition: background-color 0.3s ease;
-        }}
-    </style>
-    """,
-    unsafe_allow_html=True)
-
-
 # 页面配置 - 宽屏模式
 st.set_page_config(page_title="长江生态保护平台", layout="wide", page_icon="🌊")
 
@@ -382,5 +373,14 @@ st.markdown(f"""
         [data-testid="stSidebar"] {{
             background-color: {bg_color};
         }}
+        
+        /* 4. 增加过渡动画，让变色更丝滑 */
+        [data-testid="stAppViewContainer"], [data-testid="stSidebar"] {{
+            transition: background-color 0.3s ease;
+        }}
+    </style>
+    """,
+    unsafe_allow_html=True)
+
 
  
