@@ -377,7 +377,7 @@ elif page == "⚙️ 系统设置":
     st.markdown('<p class="section-title">...', unsafe_allow_html=True)
 
     # ✅ 在这里粘贴滑块
-    brightness = st.slider("调节背景亮度", 0, 100, st.session_state.brightness)
+    brightness = st.slider("调节背景亮度", 0, 100, 91)
     st.session_state.brightness = brightness
 
     st.toggle("开启实时报警推送")
