@@ -265,8 +265,7 @@ elif page == "🐟 鱼类修复中心":
     st.markdown('<p class="section-title">🐟 长江鱼类生态修复系统</p >', unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
-
-    with col1:
+   with col1:
         st.markdown("### 📈 种群恢复趋势")
         # 绘制面积图(包含4个维度,颜色更丰富)
         fig = px.area(
@@ -282,7 +281,7 @@ elif page == "🐟 鱼类修复中心":
             font_color="#cccccc"
         )
         st.plotly_chart(fig, use_container_width=True)
-       with col2: 
+   with col2: 
         st.markdown("### 📅 近期放流活动")
         # ... (后面保持不变) ...
    
