@@ -3,6 +3,10 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
+   # 如果你需要模拟最近30天的数据（为了防止报错，先加这一段）：
+import pandas as pd
+import numpy as np
+   
 
 # 初始化亮度，如果之前没设置过，默认为 100
 if 'brightness' not in st.session_state:
@@ -262,12 +266,9 @@ elif page == "💧 水质监测中心":
 # 如果你的 water_data 里已经有足够的数据，直接用：
 # trend_data = water_data  <-- 如果你的数据本身就是最近的，直接用这句
 
-   # 如果你需要模拟最近30天的数据（为了防止报错，先加这一段）：
-import pandas as pd
-import numpy as np
-   
+
    # 生成最近30天的日期
-dates = pd.date_range(end=pd.Timestamp.today(), periods=30)
+   dates = pd.date_range(end=pd.Timestamp.today(), periods=30)
    trend_data = pd.DataFrame({
        "日期": dates,
        "溶解氧": np.random.uniform(6.0, 8.5, 30), # 模拟溶解氧数据
