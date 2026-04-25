@@ -253,35 +253,35 @@ elif page == "📚 科普教育平台":
         with st.expander(f"📄 {article['title']} ({article['date']})"):
             st.write(article["content"])
 
-    st.markdown("### 🎥 科普视频推荐")
-    # 使用 HTML iframe 嵌入视频，兼容性更好
-# 注意：我们将 watch?v= 后面的 ID 提取出来，放入 embed 链接中
-# --- 视频部分 ---
-# ==========================================
-# 第一部分：科普视频推荐（放在设置判断之前）
-# ==========================================
-st.markdown("### 📺 科普视频推荐")
-
-# ==========================================
-# 1. 科普视频区域 (主页面内容)
-# ==========================================
-video_html = """
-<div style="display: flex; justify-content: center; margin: 20px 0;">
-    <iframe
-        src="//player.bilibili.com/player.html?isOutside=true&aid=112844863506780&bvid=BV1ebe9epEYX&cid=500001626552220&p=1"
-        scrolling="no"
-        border="0"
-        frameborder="no"
-        framespacing="0"
-        allowfullscreen="true"
-        width="800"
-        height="450">
-    </iframe>
-</div>
-"""
-# 注意：这里只保留一次渲染
-
-st.markdown(video_html, unsafe_allow_html=True)
+        st.markdown("### 🎥 科普视频推荐")
+        # 使用 HTML iframe 嵌入视频，兼容性更好
+    # 注意：我们将 watch?v= 后面的 ID 提取出来，放入 embed 链接中
+    # --- 视频部分 ---
+    # ==========================================
+    # 第一部分：科普视频推荐（放在设置判断之前）
+    # ==========================================
+    st.markdown("### 📺 科普视频推荐")
+    
+    # ==========================================
+    # 1. 科普视频区域 (主页面内容)
+    # ==========================================
+    video_html = """
+    <div style="display: flex; justify-content: center; margin: 20px 0;">
+        <iframe
+            src="//player.bilibili.com/player.html?isOutside=true&aid=112844863506780&bvid=BV1ebe9epEYX&cid=500001626552220&p=1"
+            scrolling="no"
+            border="0"
+            frameborder="no"
+            framespacing="0"
+            allowfullscreen="true"
+            width="800"
+            height="450">
+        </iframe>
+    </div>
+    """
+    # 注意：这里只保留一次渲染
+    
+    st.markdown(video_html, unsafe_allow_html=True)
 
 # ==========================================
 # 2. 互动问答区域 (属于主页面)
