@@ -417,7 +417,7 @@ elif page == "⚙️ 系统设置":
     st.slider("设置数据刷新频率（分钟）", 1, 60, 5)
    
     st.toggle("开启实时报警推送")
-    st.markdown('<p class="section-title">...', unsafe_allow_html=True)
+    st.markdown('<p class="section-title">亮度设置', unsafe_allow_html=True)
 
     # ✅ 在这里粘贴滑块
     brightness = st.slider("调节背景亮度", 0, 100, 91)
