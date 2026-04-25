@@ -260,22 +260,14 @@ elif page == "💧 水质监测中心":
         "溶解氧": [6.2 + i * 0.03 for i in range(30)],
         "pH": [7.1 + i * 0.01 for i in range(30)]
     })
-   # 生成基础折线图
-# --- 1. 先准备数据（这是你漏掉的一步） ---
-# 假设你的总数据表叫 water_data，我们需要筛选出最近的数据或者模拟一下
-# 如果你的 water_data 里已经有足够的数据，直接用：
-# trend_data = water_data  <-- 如果你的数据本身就是最近的，直接用这句
-
-
-   # 生成最近30天的日期
-dates = pd.date_range(end=pd.Timestamp.today(), periods=30)
+   dates = pd.date_range(end=pd.Timestamp.today(), periods=30)
 trend_data = pd.DataFrame({
     "日期": dates,
     "溶解氧": np.random.uniform(6.0, 8.5, 30), # 模拟溶解氧数据
     "pH": np.random.uniform(7.0, 8.0, 30)      # 模拟pH数据
 })
 
-   # --- 2. 再画图 ---
+
 fig = px.line(
     trend_data,  # 现在程序认识 trend_data 了
     x="日期",
@@ -285,7 +277,7 @@ fig = px.line(
     color_discrete_map={"溶解氧": "#00ffff", "pH": "#ffaa00"}
 )
    
-   # ... 后面的 update_layout 代码保持不变 ...
+
 fig = px.line(
     trend_data,
     x="日期",
@@ -295,7 +287,7 @@ fig = px.line(
     color_discrete_map={"溶解氧": "#00ffff", "pH": "#ffaa00"} # 【关键修改】指定好看的颜色，而不是默认的蓝色
 )
 
-# 深度美化布局
+
 fig.update_layout(
     plot_bgcolor="rgba(0,0,0,0)",      # 图表背景透明
     paper_bgcolor="rgba(0,0,0,0)",     # 纸张背景透明
@@ -320,11 +312,19 @@ fig.update_layout(
     )
 )
 
-# 统一设置线条粗细（让线条更饱满）
 fig.update_traces(line_width=3)
 
-# 渲染图表
+
 st.plotly_chart(fig, use_container_width=True)
+   # 生成基础折线图
+# --- 1. 先准备数据（这是你漏掉的一步） ---
+# 假设你的总数据表叫 water_data，我们需要筛选出最近的数据或者模拟一下
+# 如果你的 water_data 里已经有足够的数据，直接用：
+# trend_data = water_data  <-- 如果你的数据本身就是最近的，直接用这句
+
+
+
+
 
 # --------------------------
 # 1. 更新到2026年的鱼类数据（带合理增长趋势）
