@@ -267,7 +267,7 @@ import pandas as pd
 import numpy as np
    
    # 生成最近30天的日期
-   dates = pd.date_range(end=pd.Timestamp.today(), periods=30)
+dates = pd.date_range(end=pd.Timestamp.today(), periods=30)
    trend_data = pd.DataFrame({
        "日期": dates,
        "溶解氧": np.random.uniform(6.0, 8.5, 30), # 模拟溶解氧数据
