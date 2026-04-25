@@ -6,10 +6,10 @@ from datetime import datetime
 
 # 初始化亮度，如果之前没设置过，默认为 100
 if 'brightness' not in st.session_state:
-st.session_state.brightness = 91
+   st.session_state.brightness = 91
    # --- 真正改变背景色的代码 ---
 # 将最后的 100 改为 None，或者直接使用 st.session_state.brightness
-brightness = st.slider("调节背景亮度", 0, 100, st.session_state.brightness)
+   brightness = st.slider("调节背景亮度", 0, 100, st.session_state.brightness)
 
     # 根据亮度值计算背景颜色 (简单的灰度示例)
     # 100 -> 白色/亮色, 0 -> 黑色/暗色
