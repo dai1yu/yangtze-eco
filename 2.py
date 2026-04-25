@@ -262,27 +262,27 @@ elif page == "💧 水质监测中心":
 # 如果你的 water_data 里已经有足够的数据，直接用：
 # trend_data = water_data  <-- 如果你的数据本身就是最近的，直接用这句
 
-# 如果你需要模拟最近30天的数据（为了防止报错，先加这一段）：
-import pandas as pd
-import numpy as np
-
-# 生成最近30天的日期
-dates = pd.date_range(end=pd.Timestamp.today(), periods=30)
-trend_data = pd.DataFrame({
-    "日期": dates,
-    "溶解氧": np.random.uniform(6.0, 8.5, 30), # 模拟溶解氧数据
-    "pH": np.random.uniform(7.0, 8.0, 30)      # 模拟pH数据
-})
-
-# --- 2. 再画图 ---
-fig = px.line(
-    trend_data,  # 现在程序认识 trend_data 了
-    x="日期",
-    y=["溶解氧", "pH"],
-    title="水质指标趋势（近30天）",
-    markers=True,
-    color_discrete_map={"溶解氧": "#00ffff", "pH": "#ffaa00"}
-)
+   # 如果你需要模拟最近30天的数据（为了防止报错，先加这一段）：
+   import pandas as pd
+   import numpy as np
+   
+   # 生成最近30天的日期
+   dates = pd.date_range(end=pd.Timestamp.today(), periods=30)
+   trend_data = pd.DataFrame({
+       "日期": dates,
+       "溶解氧": np.random.uniform(6.0, 8.5, 30), # 模拟溶解氧数据
+       "pH": np.random.uniform(7.0, 8.0, 30)      # 模拟pH数据
+   })
+   
+   # --- 2. 再画图 ---
+   fig = px.line(
+       trend_data,  # 现在程序认识 trend_data 了
+       x="日期",
+       y=["溶解氧", "pH"],
+       title="水质指标趋势（近30天）",
+       markers=True,
+       color_discrete_map={"溶解氧": "#00ffff", "pH": "#ffaa00"}
+   )
 
 # ... 后面的 update_layout 代码保持不变 ...
 fig = px.line(
