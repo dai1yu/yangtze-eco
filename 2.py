@@ -123,25 +123,49 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==================== 侧边栏导航 ====================
+# ==================== 侧边栏导航（二级菜单版） ====================
 with st.sidebar:
-    st.markdown("# 🌊 长江生态保护")
+    st.markdown("# 🐟 长江生态保护")
     st.markdown("### 智慧监测 · 生态修复 · 科普教育")
     st.markdown("---")
 
-with st.sidebar:
-    # ... 你的标题和其他内容 ...
+    # 二级菜单折叠栏
+    menu_overview = st.expander("🏠 首页总览", expanded=False)
+    menu_water = st.expander("💧 水环境监测", expanded=False)
+    menu_fish = st.expander("🐟 生物修复中心", expanded=False)
+    menu_report = st.expander("📊 数据分析报告", expanded=False)
+    menu_setting = st.expander("⚙️ 系统设置", expanded=False)
 
-    # 加入这个滑块（或者把它放在“系统设置”页面里，但必须在 session_state 中保存）
-    # 这里为了演示全局控制，建议直接放侧边栏，或者在“系统设置”里修改 st.session_state.brightness
-   
-   
-    page = st.selectbox(
-    "选择驾驶舱",
-    ["🏠 总览驾驶舱", "💧 水质监测中心", "🐟 鱼类修复中心", "📚 科普教育平台", "📊 数据分析报告", "⚙️ 系统设置"],
-    key="nav"
-)
+    # 菜单选项
+    with menu_overview:
+        page_overview = st.radio("", ["总览驾驶舱"], label_visibility="collapsed")
+
+    with menu_water:
+        page_water = st.radio("", ["水质监测中心"], label_visibility="collapsed")
+
+    with menu_fish:
+        page_fish = st.radio("", ["鱼类修复中心"], label_visibility="collapsed")
+
+    with menu_report:
+        page_report = st.radio("", ["数据分析报告"], label_visibility="collapsed")
+
+    with menu_setting:
+        page_setting = st.radio("", ["系统设置"], label_visibility="collapsed")
+
     st.markdown("---")
     st.caption("实时数据更新中 | 数据来源：长江水利委员会")
+
+# 把选中的菜单映射成你原来的page变量
+if page_overview == "总览驾驶舱":
+    page = "🏠 总览驾驶舱"
+elif page_water == "水质监测中心":
+    page = "💧 水质监测中心"
+elif page_fish == "鱼类修复中心":
+    page = "🐟 鱼类修复中心"
+elif page_report == "数据分析报告":
+    page = "📊 数据分析报告"
+elif page_setting == "系统设置":
+    page = "⚙️ 系统设置"
 
 # ==================== 模拟数据 ====================
 water_data = pd.DataFrame({
