@@ -268,13 +268,13 @@ elif page == "💧 水质监测中心":
 
 
    # 生成最近30天的日期
-   dates = pd.date_range(end=pd.Timestamp.today(), periods=30)
-   trend_data = pd.DataFrame({
-       "日期": dates,
-       "溶解氧": np.random.uniform(6.0, 8.5, 30), # 模拟溶解氧数据
-       "pH": np.random.uniform(7.0, 8.0, 30)      # 模拟pH数据
-   })
-   
+dates = pd.date_range(end=pd.Timestamp.today(), periods=30)
+trend_data = pd.DataFrame({
+    "日期": dates,
+    "溶解氧": np.random.uniform(6.0, 8.5, 30), # 模拟溶解氧数据
+    "pH": np.random.uniform(7.0, 8.0, 30)      # 模拟pH数据
+})
+
    # --- 2. 再画图 ---
    fig = px.line(
        trend_data,  # 现在程序认识 trend_data 了
