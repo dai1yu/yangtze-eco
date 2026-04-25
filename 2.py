@@ -372,7 +372,7 @@ elif page == "📊 数据分析报告":
 elif page == "⚙️ 系统设置":
     st.markdown('<p class="section-title">⚙️ 系统全局设置</p>', unsafe_allow_html=True)
 
-    st.toggle("开启实时报警推送")
+   
     st.slider("设置数据刷新频率（分钟）", 1, 60, 5)
     st.markdown('<p class="section-title">...', unsafe_allow_html=True)
 
