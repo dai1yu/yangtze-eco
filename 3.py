@@ -1,339 +1,396 @@
+from pathlib import Path
+import zipfile, textwrap
+
+root = Path("/mnt/data/digital_twin_onnx")
+(root / "models").mkdir(parents=True, exist_ok=True)
+
+detector_py = r'''from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Optional, Sequence
+
+import cv2
+import numpy as np
+import onnxruntime as ort
+from PIL import Image
+
+
+@dataclass
+class Detection:
+    x1: int
+    y1: int
+    x2: int
+    y2: int
+    confidence: float
+    class_id: int
+    class_name: str
+
+
+class ONNXDetector:
+    """
+    YOLO ONNX inference helper.
+
+    Supported common output layouts:
+      1) YOLOv8/YOLO11 raw output: [1, 4 + classes, N] or [1, N, 4 + classes]
+      2) YOLOv5 raw output: [1, N, 5 + classes] (objectness + class scores)
+      3) NMS output: [N, 6] or [1, N, 6] as x1,y1,x2,y2,score,class_id
+
+    Note: exported ONNX models differ. Check session output shape and adjust
+    parse_output() if your export uses a different layout or normalized boxes.
+    """
+
+    def __init__(
+        self,
+        model_path: Optional[str] = None,
+        model_bytes: Optional[bytes] = None,
+        class_names: Optional[Sequence[str]] = None,
+        input_size: int = 640,
+        conf_threshold: float = 0.35,
+        iou_threshold: float = 0.45,
+    ):
+        if model_bytes is None and not model_path:
+            raise ValueError("请提供 ONNX 模型路径或模型文件内容。")
+
+        providers = ["CPUExecutionProvider"]
+        available = ort.get_available_providers()
+        if "CUDAExecutionProvider" in available:
+            providers.insert(0, "CUDAExecutionProvider")
+
+        source = model_bytes if model_bytes is not None else str(model_path)
+        self.session = ort.InferenceSession(source, providers=providers)
+        self.input_meta = self.session.get_inputs()[0]
+        self.input_name = self.input_meta.name
+        self.output_names = [o.name for o in self.session.get_outputs()]
+
+        shape = self.input_meta.shape
+        # Typical NCHW input: [1, 3, 640, 640]
+        self.input_h = int(shape[2]) if len(shape) == 4 and isinstance(shape[2], int) else input_size
+        self.input_w = int(shape[3]) if len(shape) == 4 and isinstance(shape[3], int) else input_size
+        self.class_names = list(class_names) if class_names else []
+        self.conf_threshold = float(conf_threshold)
+        self.iou_threshold = float(iou_threshold)
+
+    @staticmethod
+    def _letterbox(image: np.ndarray, new_shape: tuple[int, int]):
+        h, w = image.shape[:2]
+        new_h, new_w = new_shape
+        scale = min(new_w / w, new_h / h)
+        resized_w, resized_h = int(round(w * scale)), int(round(h * scale))
+        resized = cv2.resize(image, (resized_w, resized_h), interpolation=cv2.INTER_LINEAR)
+
+        pad_w = new_w - resized_w
+        pad_h = new_h - resized_h
+        left = pad_w // 2
+        right = pad_w - left
+        top = pad_h // 2
+        bottom = pad_h - top
+        canvas = cv2.copyMakeBorder(
+            resized, top, bottom, left, right,
+            cv2.BORDER_CONSTANT, value=(114, 114, 114)
+        )
+        return canvas, scale, left, top
+
+    def _preprocess(self, image_rgb: np.ndarray):
+        image_bgr = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR)
+        padded, scale, pad_x, pad_y = self._letterbox(
+            image_bgr, (self.input_h, self.input_w)
+        )
+        tensor = padded[:, :, ::-1].transpose(2, 0, 1)
+        tensor = np.ascontiguousarray(tensor, dtype=np.float32) / 255.0
+        tensor = tensor[None, ...]
+        return tensor, scale, pad_x, pad_y
+
+    def _name(self, class_id: int) -> str:
+        if 0 <= class_id < len(self.class_names):
+            return self.class_names[class_id]
+        return f"class_{class_id}"
+
+    def _nms(self, boxes_xywh, scores, class_ids):
+        if len(boxes_xywh) == 0:
+            return []
+        indices = cv2.dnn.NMSBoxes(
+            boxes_xywh,
+            scores,
+            self.conf_threshold,
+            self.iou_threshold
+        )
+        if len(indices) == 0:
+            return []
+        return np.array(indices).reshape(-1).tolist()
+
+    def _parse_output(self, output: np.ndarray):
+        pred = np.asarray(output)
+        pred = np.squeeze(pred)
+
+        if pred.ndim == 1:
+            pred = pred.reshape(1, -1)
+        if pred.ndim != 2:
+            raise RuntimeError(f"暂不支持模型输出维度：{pred.shape}")
+
+        # End-to-end/NMS output: x1,y1,x2,y2,confidence,class_id
+        if pred.shape[-1] == 6:
+            rows = []
+            for row in pred:
+                x1, y1, x2, y2, score, cls = row[:6]
+                if float(score) < self.conf_threshold:
+                    continue
+                rows.append((float(x1), float(y1), float(x2), float(y2),
+                             float(score), int(cls)))
+            return rows, "xyxy"
+
+        # YOLO raw outputs. Convert [features, candidates] to [candidates, features].
+        if pred.shape[0] < pred.shape[1] and pred.shape[0] in (4 + 1, 4 + 2, 4 + 3, 4 + 4, 4 + 5, 4 + 6, 4 + 7, 4 + 8, 4 + 9, 4 + 10, 4 + 11, 4 + 12, 4 + 13, 4 + 14, 4 + 15, 4 + 16, 4 + 17, 4 + 18, 4 + 19, 4 + 20, 4 + 21, 4 + 22, 4 + 23, 4 + 24, 4 + 25, 4 + 26, 4 + 27, 4 + 28, 4 + 29, 4 + 30, 4 + 31, 4 + 32, 4 + 33, 4 + 34, 4 + 35, 4 + 36, 4 + 37, 4 + 38, 4 + 39, 4 + 40, 4 + 41, 4 + 42, 4 + 43, 4 + 44, 4 + 45, 4 + 46, 4 + 47, 4 + 48, 4 + 49, 4 + 50, 4 + 51, 4 + 52, 4 + 53, 4 + 54, 4 + 55, 4 + 56, 4 + 57, 4 + 58, 4 + 59, 4 + 60, 4 + 61, 4 + 62, 4 + 63, 4 + 64, 4 + 65, 4 + 66, 4 + 67, 4 + 68, 4 + 69, 4 + 70, 4 + 71, 4 + 72, 4 + 73, 4 + 74, 4 + 75, 4 + 76, 4 + 77, 4 + 78, 4 + 79, 4 + 80):
+            pred = pred.T
+
+        rows = []
+        feature_count = pred.shape[1]
+        is_yolov5 = feature_count > 6 and feature_count - 5 > 0
+
+        for row in pred:
+            if feature_count < 5:
+                continue
+            cx, cy, bw, bh = map(float, row[:4])
+
+            if is_yolov5:
+                objectness = float(row[4])
+                class_scores = row[5:]
+                class_id = int(np.argmax(class_scores))
+                score = objectness * float(class_scores[class_id])
+            else:
+                class_scores = row[4:]
+                class_id = int(np.argmax(class_scores))
+                score = float(class_scores[class_id])
+
+            if score < self.conf_threshold:
+                continue
+
+            x1 = cx - bw / 2
+            y1 = cy - bh / 2
+            x2 = cx + bw / 2
+            y2 = cy + bh / 2
+            rows.append((x1, y1, x2, y2, score, class_id))
+        return rows, "xyxy"
+
+    def predict(self, image: Image.Image):
+        image_rgb = np.asarray(image.convert("RGB"))
+        orig_h, orig_w = image_rgb.shape[:2]
+        tensor, scale, pad_x, pad_y = self._preprocess(image_rgb)
+
+        outputs = self.session.run(self.output_names, {self.input_name: tensor})
+        rows, _ = self._parse_output(outputs[0])
+
+        detections = []
+        boxes_for_nms, scores, class_ids = [], [], []
+        raw_rows = []
+
+        for x1, y1, x2, y2, score, class_id in rows:
+            # Map model coordinates back to original image coordinates.
+            x1 = (x1 - pad_x) / scale
+            x2 = (x2 - pad_x) / scale
+            y1 = (y1 - pad_y) / scale
+            y2 = (y2 - pad_y) / scale
+
+            x1 = float(np.clip(x1, 0, orig_w - 1))
+            x2 = float(np.clip(x2, 0, orig_w - 1))
+            y1 = float(np.clip(y1, 0, orig_h - 1))
+            y2 = float(np.clip(y2, 0, orig_h - 1))
+            if x2 <= x1 or y2 <= y1:
+                continue
+
+            raw_rows.append((x1, y1, x2, y2, score, class_id))
+            boxes_for_nms.append([int(x1), int(y1), int(x2 - x1), int(y2 - y1)])
+            scores.append(float(score))
+            class_ids.append(int(class_id))
+
+        # Class-aware NMS to avoid suppressing overlapping objects of different classes.
+        keep = []
+        for cls in sorted(set(class_ids)):
+            local = [i for i, c in enumerate(class_ids) if c == cls]
+            local_indices = self._nms(
+                [boxes_for_nms[i] for i in local],
+                [scores[i] for i in local],
+                [class_ids[i] for i in local]
+            )
+            keep.extend(local[i] for i in local_indices)
+
+        for i in keep:
+            x1, y1, x2, y2, score, class_id = raw_rows[i]
+            detections.append(Detection(
+                int(round(x1)), int(round(y1)), int(round(x2)), int(round(y2)),
+                float(score), int(class_id), self._name(int(class_id))
+            ))
+
+        detections.sort(key=lambda d: d.confidence, reverse=True)
+        return detections
+
+    @staticmethod
+    def draw(image: Image.Image, detections: list[Detection]):
+        from PIL import ImageDraw, ImageFont
+
+        result = image.convert("RGB").copy()
+        draw = ImageDraw.Draw(result)
+        try:
+            font = ImageFont.truetype("msyh.ttc", 18)
+        except OSError:
+            font = ImageFont.load_default()
+
+        palette = [
+            (0, 220, 220), (255, 178, 46), (64, 230, 160),
+            (70, 150, 255), (220, 90, 240), (255, 100, 100)
+        ]
+        for det in detections:
+            color = palette[det.class_id % len(palette)]
+            draw.rectangle((det.x1, det.y1, det.x2, det.y2), outline=color, width=3)
+            label = f"{det.class_name} {det.confidence:.2f}"
+            box = draw.textbbox((det.x1, max(0, det.y1 - 24)), label, font=font)
+            draw.rectangle(box, fill=color)
+            draw.text((det.x1, max(0, det.y1 - 24)), label, fill=(0, 15, 20), font=font)
+        return result
+'''
+
+app_py = r'''from __future__ import annotations
+
+from collections import Counter
+from pathlib import Path
+import time
+
 import streamlit as st
 import streamlit.components.v1 as components
-from datetime import datetime
+from PIL import Image
+
+from detector import ONNXDetector
+
+BASE_DIR = Path(__file__).resolve().parent
+MODEL_DIR = BASE_DIR / "models"
+DEFAULT_MODEL = MODEL_DIR / "model.onnx"
 
 st.set_page_config(
     page_title="智能工厂数字孪生平台",
     page_icon="🏭",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded",
 )
 
-# 隐藏 Streamlit 默认边距和工具栏，让页面更接近工业数字孪生大屏
 st.markdown("""
 <style>
-    #MainMenu, footer, header, [data-testid="stToolbar"] {visibility: hidden;}
-    .stApp {background: #06121b;}
-    .block-container {padding: 0 !important; max-width: 100% !important;}
-    iframe {border: 0;}
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap');
+.stApp { background:#06131d; color:#d9faff; }
+header, footer, #MainMenu {visibility:hidden;}
+.block-container {padding:1rem 1.5rem 2rem 1.5rem; max-width:1800px;}
+[data-testid="stSidebar"] {background:#081c28;border-right:1px solid #155b69;}
+[data-testid="stMetric"] {background:linear-gradient(135deg,#0c2b38,#091b28);
+border:1px solid #176273;padding:12px;border-radius:5px;}
+[data-testid="stMetricLabel"] {color:#77cbd2;}
+[data-testid="stMetricValue"] {color:#dfffff;}
+h1,h2,h3 {color:#dfffff!important;}
+div.stButton>button {background:#087d89;color:white;border:1px solid #20dce1;border-radius:3px;}
+div.stButton>button:hover {background:#0a9da6;color:white;border-color:#8affff;}
+div[data-testid="stFileUploader"] {background:#0a202b;border:1px dashed #168897;padding:10px;border-radius:5px;}
+.small-note {color:#78b9c1;font-size:12px;}
+.status-pill {display:inline-block;padding:4px 10px;border:1px solid #20cfae;color:#4ae6bf;
+background:#06372f;border-radius:2px;font-size:12px;}
 </style>
 """, unsafe_allow_html=True)
 
-html = r"""
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>智能工厂数字孪生平台</title>
-<style>
-*{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#06121b;color:#d8fbff;
-font-family:"Microsoft YaHei",Arial,sans-serif}
-:root{--cyan:#16d9df;--blue:#168ba8;--line:rgba(26,220,230,.48);--panel:rgba(3,24,34,.82)}
-#app{position:relative;width:100vw;height:100vh;min-height:680px;overflow:hidden;background:
-radial-gradient(ellipse at 50% 48%,rgba(0,111,132,.23),transparent 55%),
-linear-gradient(180deg,#061724 0%,#06121b 100%)}
-#scene{position:absolute;inset:0;width:100%;height:100%;z-index:0}
-.topbar{position:absolute;z-index:5;left:0;right:0;top:0;height:66px;
-background:linear-gradient(180deg,rgba(3,19,29,.97),rgba(3,19,29,.48));
-border-bottom:1px solid rgba(31,214,224,.35);display:flex;align-items:center;justify-content:space-between;padding:0 24px}
-.brand{font-size:23px;font-weight:700;letter-spacing:5px;color:#dffcff;text-shadow:0 0 15px #00d9e9}
-.brand small{display:block;font-size:9px;letter-spacing:3px;color:#56b8c4;margin-top:3px;font-weight:400}
-.top-actions{display:flex;align-items:center;gap:10px}
-.top-btn{border:1px solid rgba(31,219,226,.55);background:rgba(0,128,145,.18);color:#9ffaff;
-padding:9px 16px;cursor:pointer;letter-spacing:1px;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
-.top-btn.active,.top-btn:hover{background:rgba(0,205,210,.35);box-shadow:0 0 14px rgba(0,224,230,.28)}
-.clock{font-size:12px;color:#83cbd2;margin-left:12px;min-width:145px;text-align:right}
-.panel{position:absolute;z-index:3;width:265px;background:linear-gradient(135deg,rgba(3,26,37,.92),rgba(3,18,29,.77));
-border:1px solid var(--line);box-shadow:0 0 20px rgba(0,207,222,.10),inset 0 0 22px rgba(0,150,170,.08);
-padding:14px 14px 12px;backdrop-filter:blur(8px)}
-.panel:before,.panel:after{content:"";position:absolute;width:35px;height:2px;background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
-.panel:before{left:-1px;top:-1px}.panel:after{right:-1px;bottom:-1px}
-.left{left:18px;top:88px;bottom:128px}
-.right{right:18px;top:88px;bottom:128px}
-.panel-title{font-size:14px;letter-spacing:2px;color:#b8faff;border-bottom:1px solid rgba(38,211,221,.32);
-padding:0 0 11px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
-.panel-title span{font-size:10px;color:#5bcbd3;letter-spacing:1px}
-.section-label{font-size:11px;color:#57c8d1;margin:13px 0 8px;display:flex;align-items:center;gap:8px}
-.section-label:before{content:"";width:5px;height:5px;background:#19dce2;box-shadow:0 0 8px #19dce2}
-.device{display:flex;justify-content:space-between;align-items:center;padding:9px 8px;margin:5px 0;
-border:1px solid rgba(27,170,185,.18);background:rgba(12,73,86,.18);font-size:11px;color:#b8dfe3;cursor:pointer}
-.device:hover,.device.selected{border-color:#14dce3;background:rgba(0,175,190,.22);color:#e1ffff}
-.dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:7px;background:#23e7a5;box-shadow:0 0 8px #23e7a5}
-.dot.warn{background:#ffba45;box-shadow:0 0 8px #ffba45}
-.dot.off{background:#768a91;box-shadow:none}
-.status{color:#39e9bd;font-size:10px}
-.status.warn{color:#ffc15b}
-.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.metric{padding:10px 8px;background:rgba(10,72,86,.28);border:1px solid rgba(27,184,195,.23);min-height:67px}
-.metric label{display:block;color:#6dbbc4;font-size:10px;margin-bottom:7px}
-.metric strong{font-size:19px;color:#d7ffff;font-weight:500}
-.metric em{font-size:9px;color:#4de0d9;font-style:normal;margin-left:3px}
-.bar-row{margin:11px 0;font-size:10px;color:#8ecbd0;display:grid;grid-template-columns:58px 1fr 34px;gap:7px;align-items:center}
-.bar{height:6px;background:rgba(125,190,197,.18);overflow:hidden}
-.bar i{display:block;height:100%;background:linear-gradient(90deg,#087c9b,#22e6d9);box-shadow:0 0 8px #14cfd9}
-.ring-wrap{display:flex;align-items:center;gap:13px;padding:8px 2px}
-.ring{width:86px;height:86px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#14d9db 0 76%,#16667a 76% 100%);position:relative}
-.ring:after{content:"";position:absolute;inset:8px;background:#09202a;border-radius:50%}
-.ring b{z-index:1;font-size:19px;color:#e1ffff;font-weight:500}
-.ring-info{font-size:10px;color:#7fc4cb;line-height:2}
-.ring-info strong{font-size:17px;color:#dfffff}
-.bottom{position:absolute;z-index:4;left:18px;right:18px;bottom:16px;height:98px;display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 1.2fr;gap:10px}
-.bottom-card{border:1px solid rgba(27,208,218,.4);background:linear-gradient(135deg,rgba(3,28,39,.93),rgba(3,17,28,.78));
-padding:12px 15px;position:relative;overflow:hidden}
-.bottom-card:after{content:"";position:absolute;left:0;bottom:0;height:2px;width:100%;background:linear-gradient(90deg,transparent,#13dce2,transparent)}
-.bottom-card label{display:block;color:#68b9c1;font-size:10px;margin-bottom:9px}
-.bottom-card strong{font-size:23px;color:#d9ffff;font-weight:500}
-.bottom-card small{font-size:10px;color:#44d8c9;margin-left:5px}
-.bottom-card .spark{float:right;color:#1cd8d8;font-size:23px;opacity:.8}
-.corner{position:absolute;z-index:2;color:rgba(52,203,214,.7);font-size:10px;letter-spacing:2px}
-.c1{top:76px;left:50%;transform:translateX(-50%)}
-.c2{bottom:126px;left:50%;transform:translateX(-50%)}
-.tooltip{position:absolute;z-index:6;left:50%;top:50%;transform:translate(-50%,-50%);padding:16px 24px;
-background:rgba(3,35,44,.94);border:1px solid #16d9df;box-shadow:0 0 20px #087b8a;display:none;font-size:13px}
-.tooltip.show{display:block}
-@media(max-width:900px){
- .panel{width:220px}.left{left:8px}.right{right:8px}
- .bottom{left:8px;right:8px;gap:5px}.bottom-card{padding:9px 7px}
- .bottom-card strong{font-size:17px}.brand{font-size:17px}
-}
-</style>
-</head>
-<body>
-<div id="app">
-<canvas id="scene"></canvas>
-<div class="topbar">
-  <div class="brand">智能工厂数字孪生平台<small>INTELLIGENT FACTORY DIGITAL TWIN PLATFORM</small></div>
-  <div class="top-actions">
-    <button class="top-btn active" id="autoBtn" onclick="toggleAuto()">自动监测</button>
-    <button class="top-btn" onclick="showToast('数据监测模块已打开')">数据监测</button>
-    <button class="top-btn" onclick="showToast('设备巡检模块已打开')">设备巡检</button>
-    <div class="clock" id="clock"></div>
-  </div>
-</div>
+if "detections" not in st.session_state:
+    st.session_state.detections = []
+if "annotated" not in st.session_state:
+    st.session_state.annotated = None
+if "source_name" not in st.session_state:
+    st.session_state.source_name = "等待上传检测图片"
+if "infer_ms" not in st.session_state:
+    st.session_state.infer_ms = 0.0
 
-<div class="corner c1">FACTORY 3D VISUALIZATION　/　数字工厂场景</div>
-<div class="panel left">
-  <div class="panel-title">设备运行监控 <span>DEVICE MONITOR</span></div>
-  <div class="section-label">生产线设备列表</div>
-  <div class="device selected" onclick="selectDevice(this,'数控加工中心 A01')"><span><i class="dot"></i>数控加工中心 A01</span><b class="status">运行中</b></div>
-  <div class="device" onclick="selectDevice(this,'数控车床 B02')"><span><i class="dot"></i>数控车床 B02</span><b class="status">运行中</b></div>
-  <div class="device" onclick="selectDevice(this,'智能机械臂 C03')"><span><i class="dot warn"></i>智能机械臂 C03</span><b class="status warn">待机</b></div>
-  <div class="device" onclick="selectDevice(this,'自动传送线 D04')"><span><i class="dot"></i>自动传送线 D04</span><b class="status">运行中</b></div>
-  <div class="device" onclick="selectDevice(this,'检测工作站 E05')"><span><i class="dot off"></i>检测工作站 E05</span><b class="status">离线</b></div>
-  <div class="section-label">设备实时参数</div>
-  <div class="metric-grid">
-    <div class="metric"><label>主轴转速</label><strong id="rpm">3200</strong><em>rpm</em></div>
-    <div class="metric"><label>主轴负载</label><strong id="load">68</strong><em>%</em></div>
-    <div class="metric"><label>设备温度</label><strong id="temp">36.5</strong><em>℃</em></div>
-    <div class="metric"><label>运行时长</label><strong>08:26</strong><em>h</em></div>
-  </div>
-  <div class="section-label">设备运行状态</div>
-  <div class="bar-row"><span>运行时间</span><div class="bar"><i style="width:86%"></i></div><b>86%</b></div>
-  <div class="bar-row"><span>加工进度</span><div class="bar"><i style="width:72%"></i></div><b>72%</b></div>
-  <div class="bar-row"><span>健康指数</span><div class="bar"><i style="width:96%"></i></div><b>96%</b></div>
-</div>
+@st.cache_resource(show_spinner=False)
+def load_detector(model_bytes: bytes, class_names_text: str, conf: float, iou: float):
+    names = [x.strip() for x in class_names_text.split(",") if x.strip()]
+    return ONNXDetector(
+        model_bytes=model_bytes,
+        class_names=names,
+        conf_threshold=conf,
+        iou_threshold=iou,
+    )
 
-<div class="panel right">
-  <div class="panel-title">生产数据分析 <span>DATA ANALYSIS</span></div>
-  <div class="section-label">生产运行总览</div>
-  <div class="ring-wrap"><div class="ring"><b>93.8%</b></div><div class="ring-info">设备综合运行率<br><strong>正常运行</strong><br>生产线状态良好</div></div>
-  <div class="section-label">关键生产指标</div>
-  <div class="metric-grid">
-    <div class="metric"><label>今日产量</label><strong id="output">1,286</strong><em>件</em></div>
-    <div class="metric"><label>合格数量</label><strong>1,264</strong><em>件</em></div>
-    <div class="metric"><label>不良品数</label><strong>22</strong><em>件</em></div>
-    <div class="metric"><label>合格率</label><strong>98.3</strong><em>%</em></div>
-  </div>
-  <div class="section-label">能源消耗监测</div>
-  <div class="bar-row"><span>电力</span><div class="bar"><i style="width:72%"></i></div><b>72%</b></div>
-  <div class="bar-row"><span>压缩空气</span><div class="bar"><i style="width:48%"></i></div><b>48%</b></div>
-  <div class="bar-row"><span>冷却液</span><div class="bar"><i style="width:35%"></i></div><b>35%</b></div>
-  <div class="section-label">实时告警</div>
-  <div style="font-size:10px;color:#8ecbd0;line-height:2.1">08:42　<span style="color:#ffc15b">●</span> C03 机械臂处于待机状态<br>08:36　<span style="color:#38e7bd">●</span> A01 加工任务正常完成</div>
-</div>
+# ---------- Sidebar ----------
+with st.sidebar:
+    st.markdown("## ⚙ 系统控制中心")
+    st.markdown('<span class="status-pill">● 平台运行中</span>', unsafe_allow_html=True)
+    st.markdown("---")
+    st.markdown("### ONNX 模型配置")
+    uploaded_model = st.file_uploader("上传目标检测模型（.onnx）", type=["onnx"])
+    if uploaded_model is not None:
+        model_bytes = uploaded_model.getvalue()
+        model_label = uploaded_model.name
+    elif DEFAULT_MODEL.exists():
+        model_bytes = DEFAULT_MODEL.read_bytes()
+        model_label = "models/model.onnx"
+    else:
+        model_bytes = None
+        model_label = "未加载模型"
 
-<div class="bottom">
- <div class="bottom-card"><label>当前生产任务</label><strong>加工任务 #0826</strong><span class="spark">▰</span></div>
- <div class="bottom-card"><label>设备总数 / 在线设备</label><strong>24 / 22</strong><small>台</small></div>
- <div class="bottom-card"><label>今日生产数量</label><strong id="bottomOutput">1,286</strong><small>件</small></div>
- <div class="bottom-card"><label>平均加工效率</label><strong>96.8</strong><small>%</small></div>
- <div class="bottom-card"><label>系统运行状态</label><strong style="color:#39e8b6">正常</strong><small>ALL SYSTEMS GO</small></div>
-</div>
-<div class="tooltip" id="toast"></div>
-</div>
+    st.caption(f"当前模型：{model_label}")
+    class_names_text = st.text_area(
+        "类别名称（按模型类别ID顺序，用英文逗号分隔）",
+        value="person,bicycle,car,motorcycle,airplane,bus,train,truck,boat,traffic light",
+        height=90,
+        help="如果是自定义训练模型，请按训练时的类别顺序填写。类别名称数量应与模型类别数一致。"
+    )
+    conf = st.slider("置信度阈值", 0.05, 0.95, 0.35, 0.05)
+    iou = st.slider("NMS IoU 阈值", 0.10, 0.90, 0.45, 0.05)
+    st.markdown("---")
+    st.markdown("### 检测输入")
+    uploaded_image = st.file_uploader("上传待检测图片", type=["jpg", "jpeg", "png", "bmp"])
+    run_button = st.button("▶ 开始目标检测", use_container_width=True, disabled=(model_bytes is None or uploaded_image is None))
+    st.markdown("---")
+    st.markdown("### 说明")
+    st.markdown(
+        '<div class="small-note">当前支持常见 YOLO ONNX 输出格式。'
+        '不同训练框架的导出格式可能不同，正式接入时需要核对模型输入尺寸、输出张量和类别顺序。</div>',
+        unsafe_allow_html=True
+    )
 
-<script type="importmap">
-{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}
-</script>
-<script type="module">
-import * as THREE from 'three';
-import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+# ---------- Inference ----------
+if run_button and uploaded_image is not None and model_bytes is not None:
+    try:
+        source_image = Image.open(uploaded_image).convert("RGB")
+        with st.spinner("ONNX Runtime 正在执行目标检测..."):
+            detector = load_detector(model_bytes, class_names_text, conf, iou)
+            start = time.perf_counter()
+            detections = detector.predict(source_image)
+            elapsed = (time.perf_counter() - start) * 1000
+            annotated = detector.draw(source_image, detections)
 
-const canvas=document.querySelector('#scene');
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.setSize(innerWidth,innerHeight);
-renderer.shadowMap.enabled=true;
-renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.15;
+        st.session_state.detections = detections
+        st.session_state.annotated = annotated
+        st.session_state.source_name = uploaded_image.name
+        st.session_state.infer_ms = elapsed
+    except Exception as exc:
+        st.error(f"模型推理失败：{exc}")
+        st.info("请检查 ONNX 模型导出格式、输入尺寸、类别配置，以及模型是否为目标检测模型。")
 
-const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x061722);
-scene.fog=new THREE.Fog(0x061722,24,65);
-const camera=new THREE.PerspectiveCamera(43,innerWidth/innerHeight,.1,150);
-camera.position.set(17,15,23);
-const controls=new OrbitControls(camera,renderer.domElement);
-controls.target.set(0,1,0);
-controls.enableDamping=true;
-controls.enablePan=true;
-controls.minDistance=12;controls.maxDistance=42;
-controls.maxPolarAngle=Math.PI*.48;
+detections = st.session_state.detections
+counts = Counter(d.class_name for d in detections)
+object_count = len(detections)
+class_count = len(counts)
+avg_conf = sum(d.confidence for d in detections) / object_count if object_count else 0.0
 
-scene.add(new THREE.HemisphereLight(0x9eefff,0x14252d,2.0));
-const key=new THREE.DirectionalLight(0xffffff,2.3);
-key.position.set(10,22,12);key.castShadow=true;scene.add(key);
-const cyanLight=new THREE.PointLight(0x00d9e8,32,35);cyanLight.position.set(-8,7,0);scene.add(cyanLight);
-const blueLight=new THREE.PointLight(0x087bff,22,30);blueLight.position.set(8,5,-8);scene.add(blueLight);
+# ---------- Header ----------
+head_l, head_r = st.columns([3, 1])
+with head_l:
+    st.markdown("# 🏭 智能工厂数字孪生平台")
+    st.caption("INTELLIGENT FACTORY DIGITAL TWIN · MACHINE VISION MONITORING")
+with head_r:
+    st.markdown(
+        f'<div style="text-align:right;padding-top:18px;color:#72c5cd;">'
+        f'系统时间　{time.strftime("%Y-%m-%d %H:%M:%S")}<br>'
+        f'<span style="color:#43e4b4;">● ONNX 推理服务就绪</span></div>',
+        unsafe_allow_html=True
+    )
 
-const mat=(color,metalness=.25,roughness=.55,emissive=0x000000)=>new THREE.MeshStandardMaterial({color,metalness,roughness,emissive});
-const floorMat=mat(0x142d35,.25,.82);
-const floor=new THREE.Mesh(new THREE.PlaneGeometry(48,36),floorMat);
-floor.rotation.x=-Math.PI/2;floor.position.y=-.08;floor.receiveShadow=true;scene.add(floor);
-const grid=new THREE.GridHelper(48,48,0x087e91,0x164451);grid.position.y=-.045;scene.add(grid);
-
-function box(parent,x,y,z,w,h,d,material,cast=true){
- const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);
- m.position.set(x,y,z);m.castShadow=cast;m.receiveShadow=true;parent.add(m);return m;
-}
-const dark=mat(0x182d37,.7,.35),steel=mat(0x819aa2,.75,.28),white=mat(0xc4d4d5,.35,.38);
-const green=mat(0x087e69,.45,.4),glass=new THREE.MeshStandardMaterial({color:0x0a7180,metalness:.25,roughness:.16,transparent:true,opacity:.55});
-const yellow=mat(0xf0aa24,.45,.4),glow=mat(0x00cbd8,.3,.25,0x006b77);
-
-function makeMachine(x,z,label){
- const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
- // 机床底座、立柱、加工舱
- box(g,0,.45,0,3.6,.9,2.7,dark);
- box(g,0,1.75,0,3.15,2.0,2.25,white);
- box(g,0,1.85,1.16,2.35,1.55,.08,glass,false);
- box(g,-1.15,1.9,1.22,.08,1.6,.12,steel);
- box(g,1.15,1.9,1.22,.08,1.6,.12,steel);
- box(g,0,2.85,0,3.35,.18,2.5,steel);
- box(g,-1.3,3.05,-.55,.42,.25,.5,dark);
- // 控制屏
- const screen=box(g,1.15,1.45,1.42,.65,.75,.08,mat(0x062a38,.2,.2,0x004f65));
- box(g,1.15,1.45,1.47,.52,.58,.025,glow,false);
- // 观察窗灯带
- box(g,0,2.62,1.29,2.5,.045,.035,glow,false);
- // 底部脚座
- for(let a of [-1.25,1.25])for(let b of [-.85,.85])box(g,a,.12,b,.42,.24,.42,dark);
- // 侧边黄色警示条
- box(g,-1.83,.95,0,.08,.12,2.0,yellow,false);
- g.userData.label=label;return g;
-}
-const machines=[
- makeMachine(-8,-5,'数控加工中心 A01'),
- makeMachine(-2,-5,'数控车床 B02'),
- makeMachine(4,-5,'数控加工中心 C03'),
- makeMachine(-8,2,'精密磨床 D04'),
- makeMachine(-2,2,'自动检测站 E05'),
- makeMachine(4,2,'数控加工中心 F06')
-];
-
-// 传送带与工件
-const beltMat=mat(0x253f49,.65,.4);
-box(scene,-1,.45,7,15,.55,1.8,beltMat);
-box(scene,-1,.76,7,14.7,.08,1.45,mat(0x0a5963,.5,.3));
-for(let i=0;i<14;i++){
- const roller=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,1.55,16),steel);
- roller.rotation.z=Math.PI/2;roller.position.set(-7.8+i*1.05,.43,7);scene.add(roller);
- const part=box(scene,-7+i*2.1,.98,7,.75,.38,.65, i%2?yellow:steel);
-}
-for(let i=0;i<8;i++){
- const post=box(scene,-11+i*3.1,2.0,-9,.12,4,.12,steel);
- box(scene,-11+i*3.1,4,-9,3.1,.12,.12,yellow);
-}
-box(scene,0,.18,-9,24,.25,.25,green);
-
-// 机械臂
-function makeRobot(x,z){
- const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
- const joint=mat(0xe2a326,.55,.3),arm=mat(0xdaa52a,.5,.32);
- const base=new THREE.Mesh(new THREE.CylinderGeometry(.65,.8,.4,24),dark);base.position.y=.25;g.add(base);
- const a=new THREE.Mesh(new THREE.BoxGeometry(.42,2.0,.42),arm);a.position.set(0,1.3,0);a.rotation.z=-.25;g.add(a);
- const j=new THREE.Mesh(new THREE.SphereGeometry(.32,20,16),joint);j.position.set(.25,2.25,0);g.add(j);
- const b=new THREE.Mesh(new THREE.BoxGeometry(.32,1.5,.32),arm);b.position.set(.7,2.75,0);b.rotation.z=.8;g.add(b);
- const tool=new THREE.Mesh(new THREE.BoxGeometry(.55,.18,.3),steel);tool.position.set(1.25,3.25,0);g.add(tool);
- return g;
-}
-const robots=[makeRobot(8,1),makeRobot(8,-6)];
-// 厂房立柱和顶部横梁
-for(let x=-13;x<=13;x+=6.5){
- for(let z of [-11,10]){
-  box(scene,x,5,z,.25,10,.25,steel);
- }
- box(scene,x,9.9,0,.22,.22,22,steel);
-}
-for(let z of [-11,10])box(scene,0,9.8,z,27,.25,.25,steel);
-
-// 设备状态灯
-const lamps=[];
-machines.forEach((m,i)=>{
- const l=new THREE.Mesh(new THREE.SphereGeometry(.12,12,12),new THREE.MeshBasicMaterial({color:i===2?0xffb52e:0x13f2c1}));
- l.position.set(m.position.x,m.position.y+3.3,m.position.z);scene.add(l);lamps.push(l);
-});
-
-function animate(){
- requestAnimationFrame(animate);
- const t=performance.now()*.001;
- robots.forEach((r,i)=>{r.rotation.y=Math.sin(t*.55+i)*.22;});
- lamps.forEach((l,i)=>{l.material.opacity=.65+.35*Math.sin(t*3+i);});
- controls.update();renderer.render(scene,camera);
-}
-animate();
-addEventListener('resize',()=>{
- camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
- renderer.setSize(innerWidth,innerHeight);
-});
-</script>
-
-<script>
-let auto=true;
-function updateClock(){
- const d=new Date();
- document.getElementById('clock').textContent=d.toLocaleDateString('zh-CN')+' '+d.toLocaleTimeString('zh-CN',{hour12:false});
-}
-updateClock();setInterval(updateClock,1000);
-function toggleAuto(){
- auto=!auto;
- const b=document.getElementById('autoBtn');
- b.classList.toggle('active',auto);
- b.textContent=auto?'自动监测':'暂停监测';
- showToast(auto?'已开启自动监测':'已暂停自动监测');
-}
-function selectDevice(el,name){
- document.querySelectorAll('.device').forEach(x=>x.classList.remove('selected'));
- el.classList.add('selected');
- showToast('当前查看：'+name);
-}
-function showToast(msg){
- const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
- clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>t.classList.remove('show'),1800);
-}
-setInterval(()=>{
- if(!auto)return;
- const rpm=3200+Math.floor(Math.random()*45-22);
- const load=66+Math.floor(Math.random()*6);
- const temp=(36.3+Math.random()*.6).toFixed(1);
- document.getElementById('rpm').textContent=rpm;
- document.getElementById('load').textContent=load;
- document.getElementById('temp').textContent=temp;
-},1800);
-</script>
-</body>
-</html>
-"""
-
-components.html(html, height=900, scrolling=False)
+# ---------- KPI ----------
+k1, k2, k3, k4, k5 = st.columns(5)
+k1.metric("本次检测目标", object_count, help="当前图片检测到的目标总数")
+k2.metric("目标类别数", class_count)
+k3.metric("平均置信度", f"{avg_conf * 100:.1f}%")
+k4.metric("推理耗时", f"{st.session_state.infer
